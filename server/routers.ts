@@ -165,6 +165,14 @@ export const appRouter = router({
       return getUserSessions(ctx.user.id);
     }),
 
+    delete: protectedProcedure
+      .input(z.object({ sessionId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { deleteSession } = await import("./db");
+        await deleteSession(input.sessionId, ctx.user.id);
+        return { success: true };
+      }),
+
     exportPDF: protectedProcedure
       .input(z.object({ planId: z.number() }))
       .mutation(async ({ input }) => {

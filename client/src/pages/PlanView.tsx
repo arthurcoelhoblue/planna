@@ -213,7 +213,23 @@ export default function PlanView() {
                 disabled={!whatsappData}
               >
                 <ShoppingCart className="w-5 h-5" />
-                Enviar para WhatsApp
+                Enviar Tudo para WhatsApp
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  // Exportar apenas lista de compras
+                  const shoppingText = `*🛒 Lista de Compras - Planna*\n\n${shoppingList.map((cat: any) => 
+                    `*${cat.category}*\n${cat.items.map((item: any) => `• ${item.quantity} ${item.unit} de ${item.item}`).join('\n')}`
+                  ).join('\n\n')}`;
+                  const encodedText = encodeURIComponent(shoppingText);
+                  window.open(`https://wa.me/?text=${encodedText}`, "_blank");
+                }}
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Lista de Compras (WhatsApp)
               </Button>
             </div>
           </div>

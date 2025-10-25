@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Clock, Loader2 } from "lucide-react";
+import { ChefHat, Clock, Loader2, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 
 export default function History() {
@@ -12,6 +12,19 @@ export default function History() {
   const { data: sessions, isLoading } = trpc.mealPlan.getHistory.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  const utils = trpc.useUtils();
+  const deletePlan = trpc.mealPlan.delete.useMutation({
+    onSuccess: () => {
+      utils.mealPlan.getHistory.invalidate();
+    },
+  });
+
+  const handleDelete = (sessionId: number) => {
+    if (confirm("Tem certeza que deseja deletar este plano?")) {
+      deletePlan.mutate({ sessionId });
+    }
+  };
 
   if (authLoading || isLoading) {
     return (
@@ -100,9 +113,19 @@ export default function History() {
                           {session.servings} marmitas • Objetivo: {session.objective}
                         </CardDescription>
                       </div>
-                      <Link href={`/plan/${session.id}`}>
-                        <Button>Ver Plano</Button>
-                      </Link>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(session.id)}
+                          disabled={deletePlan.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <Link href={`/plan/${session.id}`}>
+                          <Button>Ver Plano</Button>
+                        </Link>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>

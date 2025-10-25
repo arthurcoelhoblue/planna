@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -132,6 +132,19 @@ export async function getUserSessions(userId: number, limit: number = 10) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(sessions).where(eq(sessions.userId, userId)).orderBy(desc(sessions.createdAt)).limit(limit);
+}
+
+export async function deleteSession(sessionId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Primeiro deleta os planos associados
+  await db.delete(plans).where(eq(plans.sessionId, sessionId));
+  
+  // Depois deleta a sessão (apenas se pertencer ao usuário)
+  await db.delete(sessions).where(
+    and(eq(sessions.id, sessionId), eq(sessions.userId, userId))
+  );
 }
 
 export async function createPlan(plan: InsertPlan) {
