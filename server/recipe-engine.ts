@@ -58,6 +58,7 @@ export async function generateMealPlan(params: {
   varieties?: number;
   allowNewIngredients?: boolean;
   sophistication?: "simples" | "gourmet";
+  skillLevel?: "beginner" | "intermediate" | "advanced";
 }): Promise<MealPlan> {
   const {
     availableIngredients,
@@ -69,6 +70,7 @@ export async function generateMealPlan(params: {
     varieties,
     allowNewIngredients = false,
     sophistication = "simples",
+    skillLevel = "intermediate",
   } = params;
 
   // Calcula número de pratos base
@@ -96,6 +98,12 @@ export async function generateMealPlan(params: {
     ? "NÍVEL GOURMET: Use técnicas culinárias mais elaboradas, temperos especiais, apresentação refinada. Pode incluir ingredientes premium se permitido."
     : "NÍVEL SIMPLES: Receitas práticas e descomplicadas, ingredientes básicos, preparo direto sem firulas.";
 
+  const skillLevelRule = skillLevel === "beginner"
+    ? "NÍVEL INICIANTE: Passos muito detalhados (8-10 sub-passos), evite tarefas em paralelo (parallel: false na maioria), adicione 20% ao tempo estimado."
+    : skillLevel === "advanced"
+    ? "NÍVEL AVANÇADO: Maximize tarefas em paralelo (parallel: true quando possível), reduza 15% do tempo estimado, pode assumir conhecimento de técnicas."
+    : "NÍVEL INTERMEDIÁRIO: Equilíbrio entre detalhamento e eficiência, algumas tarefas em paralelo quando lógico.";
+
   // Monta o prompt para a IA
   const systemPrompt = `Você é um planejador de marmitas minimalista e prático.
 
@@ -107,6 +115,8 @@ REGRAS IMPORTANTES:
 5. Sugira 2 variações simples para cada prato (tempero diferente, montagem diferente)
 6. ${objectiveFocus}
 7. ${sophisticationRule}
+8. ${skillLevelRule}
+9. CÁLCULO DE TEMPO: O totalPrepTime deve considerar tarefas paralelas. Se 2 tarefas de 30min cada são paralelas, contam como 30min (não 60min). Some apenas o tempo real necessário.
 8. Passos curtos e acionáveis no título, mas com detalhamento completo
 9. Tempo total de preparo deve ser otimizado (batch cooking)
 10. IMPORTANTE: Para cada passo do prepSchedule, inclua:
@@ -155,7 +165,8 @@ FORMATO DE SAÍDA (JSON):
     }
   ],
   "estimatedCost": "baixo",
-  "totalPrepTime": 90
+  "totalPrepTime": 90,
+  "note": "Tempo calculado considerando tarefas em paralelo. Iniciantes podem precisar de mais tempo."
 }`;
 
   const userPrompt = `Crie um plano semanal de marmitas com os seguintes parâmetros:
@@ -251,6 +262,7 @@ Gere o plano completo em JSON.`;
               },
               estimatedCost: { type: "string", enum: ["baixo", "médio", "alto"] },
               totalPrepTime: { type: "number" },
+              note: { type: "string" },
             },
             required: ["dishes", "shoppingList", "prepSchedule", "estimatedCost", "totalPrepTime"],
             additionalProperties: false,

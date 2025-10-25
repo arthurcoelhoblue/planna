@@ -10,10 +10,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { ChefHat, Loader2, Camera, AlertCircle, X, ImageIcon } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { ExclusionsModal } from "@/components/ExclusionsModal";
+import { OnboardingModal } from "@/components/OnboardingModal";
 import { storagePut } from "../../../server/storage";
 interface UploadedImage {
   file: File;
@@ -38,6 +39,18 @@ export default function Planner() {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [shouldReplaceIngredients, setShouldReplaceIngredients] = useState<boolean | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  const { data: preferences } = trpc.preferences.get.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  // Mostrar onboarding se usuário autenticado e sem preferências
+  useEffect(() => {
+    if (isAuthenticated && preferences === null) {
+      setShowOnboarding(true);
+    }
+  }, [isAuthenticated, preferences]);
 
   const generatePlan = trpc.mealPlan.generate.useMutation({
     onSuccess: (data) => {
@@ -230,6 +243,11 @@ export default function Planner() {
           </nav>
         </div>
       </header>
+
+      <OnboardingModal
+        open={showOnboarding}
+        onComplete={() => setShowOnboarding(false)}
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">

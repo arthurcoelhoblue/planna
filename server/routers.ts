@@ -113,10 +113,11 @@ export const appRouter = router({
           availableIngredients,
           servings: input.servings,
           exclusions: allExclusions,
-          objective: input.objective as "praticidade" | "economia" | "desperdicio" | "custo" | undefined,
+          objective: input.objective,
           varieties: input.varieties,
           allowNewIngredients: input.allowNewIngredients,
           sophistication: input.sophistication,
+          skillLevel: userPref?.skillLevel || "intermediate",
           userFavorites,
           userDislikes,
         });
