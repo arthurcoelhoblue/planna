@@ -169,13 +169,23 @@ export default function PlanView() {
                     { planId: parseInt(planId) },
                     {
                       onSuccess: (data) => {
-                        // Abre o HTML em uma nova janela para imprimir
+                        // Cria um blob com o HTML e faz download
+                        const blob = new Blob([data.html], { type: 'text/html' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `plano-marmitas-${planId}.html`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        
+                        // Também abre em nova janela para impressão
                         const printWindow = window.open("", "_blank");
                         if (printWindow) {
                           printWindow.document.write(data.html);
                           printWindow.document.close();
                           printWindow.focus();
-                          setTimeout(() => printWindow.print(), 500);
                         }
                       },
                     }
