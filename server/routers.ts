@@ -41,10 +41,12 @@ export const appRouter = router({
           ingredients: z.string(),
           servings: z.number().min(6).max(20),
           exclusions: z.array(z.string()).optional(),
-          objective: z.enum(["praticidade", "economia"]).optional(),
+          objective: z.enum(["praticidade", "economia", "desperdicio", "custo"]).optional(),
+          varieties: z.number().min(2).max(6).optional(),
+          allowNewIngredients: z.boolean().optional(),
         })
       )
-      .mutation(async ({ ctx, input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { parseIngredients } = await import("./ingredients-dictionary");
         const { generateMealPlan } = await import("./recipe-engine");
         const {
@@ -80,7 +82,9 @@ export const appRouter = router({
           availableIngredients,
           servings: input.servings,
           exclusions: allExclusions,
-          objective: input.objective,
+          objective: input.objective as "praticidade" | "economia" | "desperdicio" | "custo" | undefined,
+          varieties: input.varieties,
+          allowNewIngredients: input.allowNewIngredients,
           userFavorites,
           userDislikes,
         });

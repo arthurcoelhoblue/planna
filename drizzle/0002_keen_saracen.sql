@@ -1,0 +1,1 @@
+ALTER TABLE `sessions` MODIFY COLUMN `objective` enum('praticidade','economia','desperdicio','custo') DEFAULT 'praticidade';

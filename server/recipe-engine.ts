@@ -50,25 +50,54 @@ export async function generateMealPlan(params: {
   availableIngredients: string[];
   servings: number;
   exclusions?: string[];
-  objective?: "praticidade" | "economia";
+  objective?: "praticidade" | "economia" | "desperdicio" | "custo";
   userFavorites?: string[];
   userDislikes?: string[];
+  varieties?: number;
+  allowNewIngredients?: boolean;
 }): Promise<MealPlan> {
-  const { availableIngredients, servings, exclusions = [], objective = "praticidade", userFavorites = [], userDislikes = [] } = params;
+  const {
+    availableIngredients,
+    servings,
+    exclusions = [],
+    objective = "praticidade",
+    userFavorites = [],
+    userDislikes = [],
+    varieties,
+    allowNewIngredients = false,
+  } = params;
 
-  // Calcula número de pratos base (3-5 dependendo do número de marmitas)
-  const numDishes = servings <= 8 ? 3 : servings <= 12 ? 4 : 5;
+  // Calcula número de pratos base
+  const numDishes = varieties || (servings <= 8 ? 3 : servings <= 12 ? 4 : 5);
+
+  // Define o foco baseado no objetivo
+  let objectiveFocus = "";
+  if (objective === "desperdicio") {
+    objectiveFocus =
+      "FOCO EM REDUÇÃO DE DESPERDÍCIO: Aproveite cascas (ex: chips de casca de batata), talos (ex: talos de brócolis refogados), sobras e partes normalmente descartadas. Sugira receitas criativas de aproveitamento.";
+  } else if (objective === "custo") {
+    objectiveFocus =
+      "FOCO EM MENOR CUSTO: Priorize ingredientes mais baratos e acessíveis. Evite cortes nobres ou ingredientes sofisticados. Maximize o rendimento.";
+  } else if (objective === "economia") {
+    objectiveFocus = "FOCO EM ECONOMIA: Aproveitamento máximo dos ingredientes e menor custo.";
+  } else {
+    objectiveFocus = "FOCO EM PRATICIDADE: Preparo rápido e simples, sem complicação.";
+  }
+
+  const ingredientsRule = allowNewIngredients
+    ? `Use PREFERENCIALMENTE os ingredientes disponíveis: ${availableIngredients.join(", ")}. Você PODE sugerir até 3 ingredientes adicionais por receita se forem essenciais e valerem a pena comprar.`
+    : `Use APENAS os ingredientes disponíveis: ${availableIngredients.join(", ")}`;
 
   // Monta o prompt para a IA
   const systemPrompt = `Você é um planejador de marmitas minimalista e prático.
 
 REGRAS IMPORTANTES:
 1. Crie ${numDishes} pratos base diferentes para ${servings} marmitas
-2. Use APENAS os ingredientes disponíveis: ${availableIngredients.join(", ")}
-3. NUNCA use estes ingredientes (exclusões): ${exclusions.join(", ")}
+2. ${ingredientsRule}
+3. NUNCA use estes ingredientes (exclusões): ${exclusions.join(", ") || "nenhum"}
 4. Cada prato deve ter proteína + carboidrato + legumes (balanceamento simples)
 5. Sugira 2 variações simples para cada prato (tempero diferente, montagem diferente)
-6. Foco em ${objective === "praticidade" ? "preparo rápido e simples" : "aproveitamento máximo e economia"}
+6. ${objectiveFocus}
 7. Passos curtos e acionáveis, sem jargão
 8. Tempo total de preparo deve ser otimizado (batch cooking)
 

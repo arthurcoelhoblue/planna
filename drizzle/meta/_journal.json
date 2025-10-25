@@ -15,6 +15,13 @@
       "when": 1761384733275,
       "tag": "0001_flowery_george_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1761386769840,
+      "tag": "0002_keen_saracen",
+      "breakpoints": true
     }
   ]
 }

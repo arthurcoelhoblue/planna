@@ -5,51 +5,77 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Loader2, X } from "lucide-react";
-import { useState } from "react";
+import { ChefHat, Loader2, Camera, AlertCircle } from "lucide-react";
+import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
+import { InfoTooltip } from "@/components/InfoTooltip";
+import { ExclusionsModal } from "@/components/ExclusionsModal";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Planner() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [ingredients, setIngredients] = useState("");
   const [servings, setServings] = useState([10]);
   const [exclusions, setExclusions] = useState<string[]>([]);
-  const [exclusionInput, setExclusionInput] = useState("");
-  const [objective, setObjective] = useState<"praticidade" | "economia">("praticidade");
+  const [showExclusionsModal, setShowExclusionsModal] = useState(false);
+  const [objective, setObjective] = useState<"desperdicio" | "custo">("desperdicio");
+  const [varieties, setVarieties] = useState([3]);
+  const [allowNewIngredients, setAllowNewIngredients] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   const generatePlan = trpc.mealPlan.generate.useMutation({
     onSuccess: (data) => {
-      // Redireciona para a página de resultado
       setLocation(`/plan/${data.planId}`);
     },
   });
 
-  const handleAddExclusion = () => {
-    if (exclusionInput.trim() && exclusions.length < 3) {
-      setExclusions([...exclusions, exclusionInput.trim()]);
-      setExclusionInput("");
-    }
+  const parseIngredientsFromText = trpc.ingredients.parse.useMutation();
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+    setIsProcessingImage(true);
+
+    // TODO: Implementar detecção de ingredientes por imagem
+    // Por enquanto, apenas simula o processamento
+    setTimeout(() => {
+      setIsProcessingImage(false);
+      setIngredients(
+        "frango, arroz, feijão, cenoura, brócolis, batata, ovos, tomate, cebola, alho"
+      );
+    }, 2000);
   };
 
-  const handleRemoveExclusion = (index: number) => {
-    setExclusions(exclusions.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ingredients.trim()) return;
 
-    generatePlan.mutate({
-      ingredients: ingredients.trim(),
-      servings: servings[0],
-      exclusions,
-      objective,
-    });
+    try {
+      generatePlan.mutate({
+        ingredients: ingredients.trim(),
+        servings: servings[0],
+        exclusions,
+        objective: objective === "desperdicio" ? "praticidade" : "economia",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar plano:", error);
+    }
   };
+
+  // Extrai ingredientes do texto para o modal de exclusões
+  const availableIngredients = ingredients
+    .split(/[,;\n]/)
+    .map((i) => i.trim())
+    .filter((i) => i.length > 0);
 
   if (authLoading) {
     return (
@@ -122,27 +148,74 @@ export default function Planner() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Ingredientes */}
                 <div className="space-y-2">
-                  <Label htmlFor="ingredients">
-                    O que você tem na geladeira? <span className="text-destructive">*</span>
-                  </Label>
+                  <div className="flex items-center">
+                    <Label htmlFor="ingredients">
+                      O que você tem em casa? <span className="text-destructive">*</span>
+                    </Label>
+                    <InfoTooltip
+                      content="Liste todos os ingredientes disponíveis na sua geladeira, despensa ou armário. Pode ser texto livre!"
+                      examples={[
+                        "Geladeira: frango, ovos, leite, queijo",
+                        "Despensa: arroz, feijão, macarrão, óleo",
+                        "Hortifruti: tomate, cebola, alho, cenoura",
+                      ]}
+                    />
+                  </div>
                   <Textarea
                     id="ingredients"
-                    placeholder="Ex: frango, arroz, feijão, cenoura, brócolis, batata, ovos..."
+                    placeholder="Ex: frango, arroz, feijão, cenoura, brócolis, batata, ovos, tomate, cebola, alho..."
                     value={ingredients}
                     onChange={(e) => setIngredients(e.target.value)}
                     rows={4}
                     required
+                    disabled={isProcessingImage}
                   />
-                  <p className="text-sm text-muted-foreground">
-                    Digite os ingredientes separados por vírgula. Pode usar texto livre!
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isProcessingImage}
+                      className="gap-2"
+                    >
+                      {isProcessingImage ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processando imagem...
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4" />
+                          Detectar por foto
+                        </>
+                      )}
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Tire uma foto da geladeira ou armário
+                    </p>
+                  </div>
                 </div>
 
                 {/* Número de marmitas */}
                 <div className="space-y-4">
-                  <Label htmlFor="servings">
-                    Quantas marmitas você quer? <span className="text-destructive">*</span>
-                  </Label>
+                  <div className="flex items-center">
+                    <Label htmlFor="servings">
+                      Quantas marmitas você quer? <span className="text-destructive">*</span>
+                    </Label>
+                    <InfoTooltip
+                      content="Defina quantas refeições você precisa preparar para a semana"
+                      examples={["8-10 marmitas: 1 pessoa, 5 dias", "12-14 marmitas: 2 pessoas, 5 dias"]}
+                    />
+                  </div>
                   <div className="flex items-center gap-4">
                     <Slider
                       id="servings"
@@ -155,88 +228,134 @@ export default function Planner() {
                     />
                     <div className="w-16 text-center font-semibold text-lg">{servings[0]}</div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Recomendamos entre 8-12 marmitas para uma semana
-                  </p>
+                </div>
+
+                {/* Número de variedades */}
+                <div className="space-y-4">
+                  <div className="flex items-center">
+                    <Label htmlFor="varieties">Quantas "misturas" diferentes na semana?</Label>
+                    <InfoTooltip
+                      content="Defina quantos pratos principais diferentes você quer preparar (ex: frango grelhado, carne moída, peixe assado)"
+                      examples={[
+                        "3 misturas: mais simples e rápido",
+                        "4-5 misturas: mais variedade, menos repetição",
+                      ]}
+                    />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Slider
+                      id="varieties"
+                      min={2}
+                      max={6}
+                      step={1}
+                      value={varieties}
+                      onValueChange={setVarieties}
+                      className="flex-1"
+                    />
+                    <div className="w-16 text-center font-semibold text-lg">{varieties[0]}</div>
+                  </div>
                 </div>
 
                 {/* Exclusões */}
                 <div className="space-y-2">
-                  <Label htmlFor="exclusions">Ingredientes para evitar (opcional)</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="exclusions"
-                      placeholder="Ex: pimentão, coentro, lactose..."
-                      value={exclusionInput}
-                      onChange={(e) => setExclusionInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddExclusion();
-                        }
-                      }}
-                      disabled={exclusions.length >= 3}
+                  <div className="flex items-center">
+                    <Label>Deseja evitar algum ingrediente?</Label>
+                    <InfoTooltip
+                      content="Selecione ingredientes que você não quer nas receitas (alergias, restrições ou preferências)"
+                      examples={["Alergias: lactose, glúten, amendoim", "Preferências: pimentão, coentro"]}
                     />
-                    <Button
-                      type="button"
-                      onClick={handleAddExclusion}
-                      disabled={!exclusionInput.trim() || exclusions.length >= 3}
-                    >
-                      Adicionar
-                    </Button>
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowExclusionsModal(true)}
+                    className="w-full"
+                  >
+                    {exclusions.length > 0
+                      ? `${exclusions.length} ingrediente(s) selecionado(s)`
+                      : "Selecionar ingredientes a evitar"}
+                  </Button>
                   {exclusions.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {exclusions.map((item, index) => (
+                      {exclusions.slice(0, 5).map((item, index) => (
                         <div
                           key={index}
-                          className="bg-destructive/10 text-destructive px-3 py-1 rounded-full flex items-center gap-2 text-sm"
+                          className="bg-destructive/10 text-destructive px-3 py-1 rounded-full text-sm"
                         >
                           {item}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveExclusion(index)}
-                            className="hover:bg-destructive/20 rounded-full p-0.5"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
                         </div>
                       ))}
+                      {exclusions.length > 5 && (
+                        <div className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-sm">
+                          +{exclusions.length - 5} mais
+                        </div>
+                      )}
                     </div>
                   )}
-                  <p className="text-sm text-muted-foreground">Máximo de 3 exclusões</p>
+                </div>
+
+                {/* Abertura para novos ingredientes */}
+                <div className="space-y-2">
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="allowNew"
+                      checked={allowNewIngredients}
+                      onCheckedChange={(checked) => setAllowNewIngredients(checked as boolean)}
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor="allowNew"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Pode sugerir ingredientes novos
+                      </label>
+                      <p className="text-sm text-muted-foreground">
+                        Permita que o sistema sugira pratos com ingredientes que você não tem, mas
+                        que esteja disposto a comprar (se te agradar)
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Objetivo */}
                 <div className="space-y-2">
-                  <Label>Qual seu objetivo principal?</Label>
+                  <div className="flex items-center">
+                    <Label>Qual seu objetivo principal?</Label>
+                    <InfoTooltip
+                      content="Escolha o foco do seu planejamento"
+                      examples={[
+                        "Redução de desperdício: aproveita cascas, talos e sobras",
+                        "Menor custo: prioriza ingredientes mais baratos",
+                      ]}
+                    />
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <button
                       type="button"
-                      onClick={() => setObjective("praticidade")}
+                      onClick={() => setObjective("desperdicio")}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
-                        objective === "praticidade"
+                        objective === "desperdicio"
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
                       }`}
                     >
-                      <div className="font-semibold mb-1">⚡ Praticidade</div>
+                      <div className="font-semibold mb-1">♻️ Redução de Desperdício</div>
                       <div className="text-sm text-muted-foreground">
-                        Receitas rápidas e simples
+                        Aproveita cascas, talos e sobras
                       </div>
                     </button>
                     <button
                       type="button"
-                      onClick={() => setObjective("economia")}
+                      onClick={() => setObjective("custo")}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
-                        objective === "economia"
+                        objective === "custo"
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
                       }`}
                     >
-                      <div className="font-semibold mb-1">💰 Economia</div>
+                      <div className="font-semibold mb-1">💰 Menor Custo</div>
                       <div className="text-sm text-muted-foreground">
-                        Máximo aproveitamento e menor custo
+                        Prioriza ingredientes mais baratos
                       </div>
                     </button>
                   </div>
@@ -260,16 +379,28 @@ export default function Planner() {
                 </Button>
 
                 {generatePlan.isError && (
-                  <div className="bg-destructive/10 text-destructive p-4 rounded-lg text-sm">
-                    <strong>Erro ao gerar plano:</strong>{" "}
-                    {generatePlan.error?.message || "Tente novamente"}
-                  </div>
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Erro ao gerar plano:</strong>{" "}
+                      {generatePlan.error?.message || "Tente novamente em alguns instantes"}
+                    </AlertDescription>
+                  </Alert>
                 )}
               </form>
             </CardContent>
           </Card>
         </div>
       </main>
+
+      {/* Modal de Exclusões */}
+      <ExclusionsModal
+        open={showExclusionsModal}
+        onOpenChange={setShowExclusionsModal}
+        availableIngredients={availableIngredients}
+        currentExclusions={exclusions}
+        onSave={setExclusions}
+      />
     </div>
   );
 }
