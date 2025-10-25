@@ -33,6 +33,8 @@ export default function Planner() {
   const [exclusions, setExclusions] = useState<string[]>([]);
   const [showExclusionsModal, setShowExclusionsModal] = useState(false);
   const [objective, setObjective] = useState<"desperdicio" | "custo">("desperdicio");
+  const [sophistication, setSophistication] = useState<"simples" | "gourmet">("simples");
+  const [planMode, setPlanMode] = useState<"weekly" | "single">("weekly");
   const [varieties, setVarieties] = useState([3]);
   const [allowNewIngredients, setAllowNewIngredients] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -141,11 +143,12 @@ export default function Planner() {
     try {
       generatePlan.mutate({
         ingredients: ingredients.trim(),
-        servings: servings[0],
+        servings: planMode === "single" ? 1 : servings[0],
         exclusions,
-        objective: objective === "desperdicio" ? "praticidade" : "economia",
-        varieties: varieties[0],
+        objective,
+        varieties: planMode === "single" ? 1 : varieties[0],
         allowNewIngredients,
+        sophistication,
       });
     } catch (error) {
       console.error("Erro ao gerar plano:", error);
@@ -227,6 +230,40 @@ export default function Planner() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Seletor de Modo */}
+                <div className="space-y-3">
+                  <Label>Tipo de Plano</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setPlanMode("weekly")}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        planMode === "weekly"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="font-semibold mb-1">📅 Plano Semanal</div>
+                      <div className="text-sm text-muted-foreground">
+                        Várias receitas para a semana toda
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPlanMode("single")}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        planMode === "single"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="font-semibold mb-1">🍽️ Receita do Dia</div>
+                      <div className="text-sm text-muted-foreground">
+                        Uma receita rápida para hoje
+                      </div>
+                    </button>
+                  </div>
+                </div>
                 {/* Upload de Imagens */}
                 <div className="space-y-3">
                   <div className="flex items-center">
@@ -371,7 +408,8 @@ export default function Planner() {
                   </p>
                 </div>
 
-                {/* Número de marmitas */}
+                {/* Número de marmitas (apenas para plano semanal) */}
+                {planMode === "weekly" && (
                 <div className="space-y-4">
                   <div className="flex items-center">
                     <Label htmlFor="servings">
@@ -395,8 +433,10 @@ export default function Planner() {
                     <div className="w-16 text-center font-semibold text-lg">{servings[0]}</div>
                   </div>
                 </div>
+                )}
 
-                {/* Número de variedades */}
+                {/* Número de variedades (apenas para plano semanal) */}
+                {planMode === "weekly" && (
                 <div className="space-y-4">
                   <div className="flex items-center">
                     <Label htmlFor="varieties">Quantas "misturas" diferentes na semana?</Label>
@@ -419,6 +459,51 @@ export default function Planner() {
                       className="flex-1"
                     />
                     <div className="w-16 text-center font-semibold text-lg">{varieties[0]}</div>
+                  </div>
+                </div>
+                )}
+
+                {/* Nível de Sofisticação */}
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Label>Nível de sofisticação</Label>
+                    <InfoTooltip
+                      content="Escolha o estilo das receitas"
+                      examples={[
+                        "Simples: receitas práticas e descomplicadas",
+                        "Gourmet: técnicas elaboradas e apresentação refinada",
+                      ]}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setSophistication("simples")}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        sophistication === "simples"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="font-semibold mb-1">🍳 Simples</div>
+                      <div className="text-sm text-muted-foreground">
+                        Prático e descomplicado
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSophistication("gourmet")}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        sophistication === "gourmet"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="font-semibold mb-1">👨‍🍳 Gourmet</div>
+                      <div className="text-sm text-muted-foreground">
+                        Elaborado e refinado
+                      </div>
+                    </button>
                   </div>
                 </div>
 

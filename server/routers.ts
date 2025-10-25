@@ -70,11 +70,12 @@ export const appRouter = router({
       .input(
         z.object({
           ingredients: z.string(),
-          servings: z.number().min(6).max(20),
+          servings: z.number().min(1).max(20),
           exclusions: z.array(z.string()).optional(),
           objective: z.enum(["praticidade", "economia", "desperdicio", "custo"]).optional(),
-          varieties: z.number().min(2).max(6).optional(),
+          varieties: z.number().min(1).max(6).optional(),
           allowNewIngredients: z.boolean().optional(),
+          sophistication: z.enum(["simples", "gourmet"]).optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
@@ -116,6 +117,7 @@ export const appRouter = router({
           objective: input.objective as "praticidade" | "economia" | "desperdicio" | "custo" | undefined,
           varieties: input.varieties,
           allowNewIngredients: input.allowNewIngredients,
+          sophistication: input.sophistication,
           userFavorites,
           userDislikes,
         });

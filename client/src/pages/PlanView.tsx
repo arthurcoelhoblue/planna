@@ -101,9 +101,10 @@ export default function PlanView() {
     );
   }
 
-  const dishes = JSON.parse(plan.dishes);
-  const shoppingList = JSON.parse(plan.shoppingList);
-  const prepSchedule = JSON.parse(plan.prepSchedule);
+  // Parse com tratamento de erro (dados podem vir como string ou objeto)
+  const dishes = typeof plan.dishes === 'string' ? JSON.parse(plan.dishes) : plan.dishes;
+  const shoppingList = typeof plan.shoppingList === 'string' ? JSON.parse(plan.shoppingList) : plan.shoppingList;
+  const prepSchedule = typeof plan.prepSchedule === 'string' ? JSON.parse(plan.prepSchedule) : plan.prepSchedule;
 
   // Agrupa lista de compras por categoria
   const groupedShopping = shoppingList.reduce((acc: any, item: any) => {

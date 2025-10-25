@@ -55,6 +55,7 @@ export async function generateMealPlan(params: {
   userDislikes?: string[];
   varieties?: number;
   allowNewIngredients?: boolean;
+  sophistication?: "simples" | "gourmet";
 }): Promise<MealPlan> {
   const {
     availableIngredients,
@@ -65,6 +66,7 @@ export async function generateMealPlan(params: {
     userDislikes = [],
     varieties,
     allowNewIngredients = false,
+    sophistication = "simples",
   } = params;
 
   // Calcula número de pratos base
@@ -88,6 +90,10 @@ export async function generateMealPlan(params: {
     ? `Use PREFERENCIALMENTE os ingredientes disponíveis: ${availableIngredients.join(", ")}. Você PODE sugerir até 3 ingredientes adicionais por receita se forem essenciais e valerem a pena comprar.`
     : `Use APENAS os ingredientes disponíveis: ${availableIngredients.join(", ")}`;
 
+  const sophisticationRule = sophistication === "gourmet"
+    ? "NÍVEL GOURMET: Use técnicas culinárias mais elaboradas, temperos especiais, apresentação refinada. Pode incluir ingredientes premium se permitido."
+    : "NÍVEL SIMPLES: Receitas práticas e descomplicadas, ingredientes básicos, preparo direto sem firulas.";
+
   // Monta o prompt para a IA
   const systemPrompt = `Você é um planejador de marmitas minimalista e prático.
 
@@ -98,8 +104,9 @@ REGRAS IMPORTANTES:
 4. Cada prato deve ter proteína + carboidrato + legumes (balanceamento simples)
 5. Sugira 2 variações simples para cada prato (tempero diferente, montagem diferente)
 6. ${objectiveFocus}
-7. Passos curtos e acionáveis, sem jargão
-8. Tempo total de preparo deve ser otimizado (batch cooking)
+7. ${sophisticationRule}
+8. Passos curtos e acionáveis
+9. Tempo total de preparo deve ser otimizado (batch cooking)
 
 ${userFavorites.length > 0 ? `PREFERÊNCIAS DO USUÁRIO (priorize): ${userFavorites.join(", ")}` : ""}
 ${userDislikes.length > 0 ? `EVITE (usuário não gosta): ${userDislikes.join(", ")}` : ""}
