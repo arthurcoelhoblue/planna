@@ -127,7 +127,7 @@ export const appRouter = router({
           userId: ctx.user.id,
           inputText: input.ingredients,
           servings: input.servings,
-          objective: input.objective || "praticidade",
+          objective: input.objective || "normal",
           exclusions: JSON.stringify(input.exclusions || []),
         });
 
