@@ -71,7 +71,7 @@ export const appRouter = router({
           ingredients: z.string(),
           servings: z.number().min(1).max(20),
           exclusions: z.array(z.string()).optional(),
-          objective: z.enum(["praticidade", "economia", "normal", "aproveitamento", "desperdicio", "custo"]).optional(),
+          objective: z.enum(["normal", "aproveitamento"]).optional(),
           varieties: z.number().min(1).max(6).optional(),
           allowNewIngredients: z.boolean().optional(),
           sophistication: z.enum(["simples", "gourmet"]).optional(),

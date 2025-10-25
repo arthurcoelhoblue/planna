@@ -52,7 +52,7 @@ export async function generateMealPlan(params: {
   availableIngredients: string[];
   servings: number;
   exclusions?: string[];
-  objective?: "praticidade" | "economia" | "normal" | "aproveitamento" | "desperdicio" | "custo";
+  objective?: "normal" | "aproveitamento";
   userFavorites?: string[];
   userDislikes?: string[];
   varieties?: number;
@@ -78,15 +78,11 @@ export async function generateMealPlan(params: {
 
   // Define o foco baseado no objetivo
   let objectiveFocus = "";
-  if (objective === "aproveitamento" || objective === "desperdicio") {
+  if (objective === "aproveitamento") {
     objectiveFocus =
       "FOCO EM APROVEITAMENTO TOTAL: Aproveite cascas (ex: chips de casca de batata), talos (ex: talos de brócolis refogados), sobras e partes normalmente descartadas. Sugira receitas criativas de aproveitamento. Reduza desperdício ao máximo.";
-  } else if (objective === "economia") {
-    objectiveFocus = "FOCO EM ECONOMIA: Aproveitamento máximo dos ingredientes e menor custo.";
-  } else if (objective === "praticidade") {
-    objectiveFocus = "FOCO EM PRATICIDADE: Preparo rápido e simples, sem complicação.";
   } else {
-    // normal ou custo
+    // normal
     objectiveFocus = "MODO NORMAL: Receitas tradicionais, práticas e balanceadas.";
   }
 

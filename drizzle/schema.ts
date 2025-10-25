@@ -49,7 +49,7 @@ export const sessions = mysqlTable("sessions", {
   userId: int("userId").notNull(),
   inputText: text("inputText").notNull(), // Raw ingredient input from user
   servings: int("servings").notNull(), // Number of meals to plan
-  objective: mysqlEnum("objective", ["praticidade", "economia", "normal", "aproveitamento", "desperdicio", "custo"]).default("normal"),
+  objective: mysqlEnum("objective", ["normal", "aproveitamento"]).default("normal"),
   exclusions: text("exclusions"), // JSON array of excluded ingredients for this session
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

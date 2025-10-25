@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE sessions SET objective = 'normal' WHERE objective IN ('praticidade', 'economia', 'desperdicio', 'custo');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jqMZP8uptaqoP6.896a312398d9 --database WDxbdCBK55YBCHv5qRB4fU --execute UPDATE sessions SET objective = 'normal' WHERE objective IN ('praticidade', 'economia', 'desperdicio', 'custo');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 53
+}
