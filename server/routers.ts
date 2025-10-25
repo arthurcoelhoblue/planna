@@ -32,6 +32,37 @@ export const appRouter = router({
         const { getSuggestions } = await import("./ingredients-dictionary");
         return getSuggestions(input.partial, input.limit);
       }),
+    detectFromImage: protectedProcedure
+      .input(
+        z.object({
+          imageUrl: z.string().url(),
+          location: z.enum(["geladeira", "congelador", "armario"]).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { detectIngredientsFromImage } = await import("./image-detection");
+        const ingredients = await detectIngredientsFromImage({
+          imageUrl: input.imageUrl,
+          location: input.location,
+        });
+        return { ingredients };
+      }),
+    detectFromMultipleImages: protectedProcedure
+      .input(
+        z.object({
+          images: z.array(
+            z.object({
+              url: z.string().url(),
+              location: z.enum(["geladeira", "congelador", "armario"]),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { detectIngredientsFromMultipleImages } = await import("./image-detection");
+        const ingredients = await detectIngredientsFromMultipleImages(input.images);
+        return { ingredients };
+      }),
   }),
 
   mealPlan: router({

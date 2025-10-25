@@ -6,14 +6,22 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { ChefHat, Loader2, Camera, AlertCircle } from "lucide-react";
+import { ChefHat, Loader2, Camera, AlertCircle, X, ImageIcon } from "lucide-react";
 import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { ExclusionsModal } from "@/components/ExclusionsModal";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { storagePut } from "../../../server/storage";
+
+interface UploadedImage {
+  file: File;
+  preview: string;
+  location: "geladeira" | "congelador" | "armario";
+  url?: string;
+}
 
 export default function Planner() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -27,8 +35,11 @@ export default function Planner() {
   const [objective, setObjective] = useState<"desperdicio" | "custo">("desperdicio");
   const [varieties, setVarieties] = useState([3]);
   const [allowNewIngredients, setAllowNewIngredients] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [currentImageLocation, setCurrentImageLocation] = useState<
+    "geladeira" | "congelador" | "armario"
+  >("geladeira");
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
 
   const generatePlan = trpc.mealPlan.generate.useMutation({
     onSuccess: (data) => {
@@ -36,23 +47,91 @@ export default function Planner() {
     },
   });
 
-  const parseIngredientsFromText = trpc.ingredients.parse.useMutation();
+  const detectFromMultipleImages = trpc.ingredients.detectFromMultipleImages.useMutation();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setImageFile(file);
-    setIsProcessingImage(true);
+    // Limita a 3 fotos
+    if (uploadedImages.length >= 3) {
+      alert("Você pode enviar no máximo 3 fotos");
+      return;
+    }
 
-    // TODO: Implementar detecção de ingredientes por imagem
-    // Por enquanto, apenas simula o processamento
-    setTimeout(() => {
-      setIsProcessingImage(false);
-      setIngredients(
-        "frango, arroz, feijão, cenoura, brócolis, batata, ovos, tomate, cebola, alho"
-      );
-    }, 2000);
+    const preview = URL.createObjectURL(file);
+    const newImage: UploadedImage = {
+      file,
+      preview,
+      location: currentImageLocation,
+    };
+
+    setUploadedImages([...uploadedImages, newImage]);
+    
+    // Limpa o input para permitir upload da mesma imagem novamente
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = uploadedImages.filter((_, i) => i !== index);
+    setUploadedImages(newImages);
+  };
+
+  const handleDetectIngredients = async () => {
+    if (uploadedImages.length === 0) {
+      alert("Por favor, adicione pelo menos uma foto");
+      return;
+    }
+
+    setIsProcessingImages(true);
+
+    try {
+      // Upload das imagens para S3 primeiro
+      const uploadedUrls: Array<{ url: string; location: "geladeira" | "congelador" | "armario" }> = [];
+      
+      for (const img of uploadedImages) {
+        // Converte File para base64 ou Blob
+        const reader = new FileReader();
+        const fileData = await new Promise<ArrayBuffer>((resolve) => {
+          reader.onload = () => resolve(reader.result as ArrayBuffer);
+          reader.readAsArrayBuffer(img.file);
+        });
+
+        // Faz upload para S3 usando a API do servidor
+        const response = await fetch("/api/upload-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: fileData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Erro ao fazer upload da imagem");
+        }
+
+        const { url } = await response.json();
+        uploadedUrls.push({ url, location: img.location });
+      }
+
+      // Detecta ingredientes nas imagens
+      const result = await detectFromMultipleImages.mutateAsync({
+        images: uploadedUrls,
+      });
+
+      // Atualiza o campo de ingredientes
+      if (result.ingredients && result.ingredients.length > 0) {
+        const newIngredients = result.ingredients.join(", ");
+        setIngredients((prev) => (prev ? `${prev}, ${newIngredients}` : newIngredients));
+      } else {
+        alert("Não foi possível detectar ingredientes nas imagens. Tente com fotos mais claras.");
+      }
+    } catch (error) {
+      console.error("Erro ao detectar ingredientes:", error);
+      alert("Erro ao processar as imagens. Tente novamente.");
+    } finally {
+      setIsProcessingImages(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,6 +144,8 @@ export default function Planner() {
         servings: servings[0],
         exclusions,
         objective: objective === "desperdicio" ? "praticidade" : "economia",
+        varieties: varieties[0],
+        allowNewIngredients,
       });
     } catch (error) {
       console.error("Erro ao gerar plano:", error);
@@ -146,7 +227,121 @@ export default function Planner() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Ingredientes */}
+                {/* Upload de Imagens */}
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <Label>Detectar ingredientes por foto (opcional)</Label>
+                    <InfoTooltip
+                      content="Tire até 3 fotos diferentes: geladeira, congelador e armário. A IA vai identificar os ingredientes automaticamente!"
+                      examples={[
+                        "Foto 1: Geladeira (frutas, legumes, laticínios)",
+                        "Foto 2: Congelador (carnes, peixes congelados)",
+                        "Foto 3: Armário (grãos, massas, conservas)",
+                      ]}
+                    />
+                  </div>
+
+                  {/* Seletor de localização */}
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={currentImageLocation === "geladeira" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentImageLocation("geladeira")}
+                    >
+                      🧊 Geladeira
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={currentImageLocation === "congelador" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentImageLocation("congelador")}
+                    >
+                      ❄️ Congelador
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={currentImageLocation === "armario" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentImageLocation("armario")}
+                    >
+                      🗄️ Armário
+                    </Button>
+                  </div>
+
+                  {/* Botão de upload */}
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadedImages.length >= 3}
+                      className="gap-2"
+                    >
+                      <Camera className="w-4 h-4" />
+                      Adicionar foto ({uploadedImages.length}/3)
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    {uploadedImages.length > 0 && (
+                      <Button
+                        type="button"
+                        onClick={handleDetectIngredients}
+                        disabled={isProcessingImages}
+                        className="gap-2"
+                      >
+                        {isProcessingImages ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Detectando...
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="w-4 h-4" />
+                            Detectar Ingredientes
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Preview das imagens */}
+                  {uploadedImages.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3">
+                      {uploadedImages.map((img, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={img.preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border-2 border-border"
+                          />
+                          <div className="absolute top-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                            {img.location === "geladeira"
+                              ? "🧊"
+                              : img.location === "congelador"
+                              ? "❄️"
+                              : "🗄️"}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Ingredientes (texto) */}
                 <div className="space-y-2">
                   <div className="flex items-center">
                     <Label htmlFor="ingredients">
@@ -168,41 +363,12 @@ export default function Planner() {
                     onChange={(e) => setIngredients(e.target.value)}
                     rows={4}
                     required
-                    disabled={isProcessingImage}
                   />
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isProcessingImage}
-                      className="gap-2"
-                    >
-                      {isProcessingImage ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Processando imagem...
-                        </>
-                      ) : (
-                        <>
-                          <Camera className="w-4 h-4" />
-                          Detectar por foto
-                        </>
-                      )}
-                    </Button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Tire uma foto da geladeira ou armário
-                    </p>
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {uploadedImages.length > 0
+                      ? "Clique em 'Detectar Ingredientes' para preencher automaticamente"
+                      : "Digite manualmente ou use fotos para detecção automática"}
+                  </p>
                 </div>
 
                 {/* Número de marmitas */}

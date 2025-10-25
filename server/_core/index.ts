@@ -35,6 +35,13 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
+  // Image upload endpoint
+  app.post("/api/upload-image", async (req, res) => {
+    const { handleImageUpload } = await import("../upload-handler");
+    return handleImageUpload(req, res);
+  });
+  
   // tRPC API
   app.use(
     "/api/trpc",

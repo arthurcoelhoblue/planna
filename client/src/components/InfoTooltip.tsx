@@ -1,9 +1,13 @@
 import { Info } from "lucide-react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useState } from "react";
 
 interface InfoTooltipProps {
   content: string;
@@ -11,30 +15,39 @@ interface InfoTooltipProps {
 }
 
 export function InfoTooltip({ content, examples }: InfoTooltipProps) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors ml-2"
+          className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors ml-2 touch-manipulation"
+          onClick={(e) => {
+            e.preventDefault();
+            setOpen(true);
+          }}
         >
           <Info className="w-3 h-3" />
         </button>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="max-w-xs">
-        <p className="text-sm mb-2">{content}</p>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Informação</DialogTitle>
+          <DialogDescription className="text-base">{content}</DialogDescription>
+        </DialogHeader>
         {examples && examples.length > 0 && (
-          <div className="text-xs text-muted-foreground">
-            <p className="font-medium mb-1">Exemplos:</p>
-            <ul className="list-disc list-inside space-y-0.5">
+          <div className="text-sm">
+            <p className="font-medium mb-2">Exemplos:</p>
+            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
               {examples.map((example, i) => (
                 <li key={i}>{example}</li>
               ))}
             </ul>
           </div>
         )}
-      </TooltipContent>
-    </Tooltip>
+      </DialogContent>
+    </Dialog>
   );
 }
 
