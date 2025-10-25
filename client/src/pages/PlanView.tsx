@@ -6,8 +6,10 @@ import { trpc } from "@/lib/trpc";
 import {
   Check,
   ChefHat,
+  ChevronDown,
   Clock,
   Download,
+  Lightbulb,
   Loader2,
   ShoppingCart,
   ThumbsDown,
@@ -20,6 +22,7 @@ export default function PlanView() {
   const { planId } = useParams<{ planId: string }>();
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
 
   const { data: plan, isLoading } = trpc.mealPlan.getById.useQuery(
     { planId: parseInt(planId || "0") },
@@ -50,6 +53,16 @@ export default function PlanView() {
       newChecked.add(item);
     }
     setCheckedItems(newChecked);
+  };
+
+  const toggleStep = (order: number) => {
+    const newExpanded = new Set(expandedSteps);
+    if (newExpanded.has(order)) {
+      newExpanded.delete(order);
+    } else {
+      newExpanded.add(order);
+    }
+    setExpandedSteps(newExpanded);
   };
 
   if (authLoading || isLoading) {
@@ -338,23 +351,76 @@ export default function PlanView() {
               <div className="space-y-3">
                 {prepSchedule
                   .sort((a: any, b: any) => a.order - b.order)
-                  .map((step: any, index: number) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-4 p-4 bg-muted/30 rounded-lg"
-                    >
-                      <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold flex-shrink-0">
-                        {step.order}
+                  .map((step: any, index: number) => {
+                    const isExpanded = expandedSteps.has(step.order);
+                    const hasDetails = step.details && step.details.length > 0;
+                    return (
+                      <div
+                        key={index}
+                        className="bg-muted/30 rounded-lg overflow-hidden border border-border/50"
+                      >
+                        <button
+                          onClick={() => hasDetails && toggleStep(step.order)}
+                          className={`flex items-start gap-4 p-4 w-full text-left transition-colors ${
+                            hasDetails ? "hover:bg-muted/50 cursor-pointer" : "cursor-default"
+                          }`}
+                        >
+                          <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold flex-shrink-0">
+                            {step.order}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium">{step.action}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {step.duration} min
+                              {step.parallel && " • Pode fazer em paralelo"}
+                            </p>
+                            {hasDetails && (
+                              <p className="text-xs text-primary mt-1">
+                                Clique para ver detalhes →
+                              </p>
+                            )}
+                          </div>
+                          {hasDetails && (
+                            <ChevronDown
+                              className={`w-5 h-5 text-muted-foreground transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          )}
+                        </button>
+
+                        {hasDetails && isExpanded && (
+                          <div className="px-4 pb-4 space-y-3 border-t border-border/50 pt-4 bg-background/50">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                👨‍🍳 Passo a passo detalhado:
+                              </h4>
+                              <ol className="space-y-2 text-sm">
+                                {step.details.map((detail: string, i: number) => (
+                                  <li key={i} className="flex items-start gap-2">
+                                    <span className="font-semibold text-primary min-w-[1.5rem]">
+                                      {i + 1}.
+                                    </span>
+                                    <span className="text-muted-foreground">{detail}</span>
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
+
+                            {step.tips && (
+                              <div className="bg-accent/20 p-3 rounded-lg">
+                                <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                                  <Lightbulb className="w-4 h-4 text-yellow-600" />
+                                  Dica:
+                                </h4>
+                                <p className="text-sm text-muted-foreground">{step.tips}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{step.action}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {step.duration} min
-                          {step.parallel && " • Pode fazer em paralelo"}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>

@@ -33,6 +33,8 @@ export interface PrepStep {
   action: string;
   duration: number; // em minutos
   parallel: boolean; // pode ser feito em paralelo com outros
+  details?: string[]; // Passos detalhados para iniciantes
+  tips?: string; // Dicas práticas
 }
 
 export interface MealPlan {
@@ -105,8 +107,12 @@ REGRAS IMPORTANTES:
 5. Sugira 2 variações simples para cada prato (tempero diferente, montagem diferente)
 6. ${objectiveFocus}
 7. ${sophisticationRule}
-8. Passos curtos e acionáveis
+8. Passos curtos e acionáveis no título, mas com detalhamento completo
 9. Tempo total de preparo deve ser otimizado (batch cooking)
+10. IMPORTANTE: Para cada passo do prepSchedule, inclua:
+    - action: Título resumido (ex: "Cozinhar arroz")
+    - details: Array com passos MUITO DETALHADOS para iniciantes (ex: ["Lave 2 xícaras de arroz em água corrente até a água sair limpa", "Coloque 4 xícaras de água em uma panela média", "Adicione 1 colher de sopa de óleo e 1 colher de chá de sal", "Ligue o fogo alto e espere ferver", "Quando ferver, adicione o arroz lavado", "Mexa uma vez e abaixe o fogo para médio-baixo", "Tampe a panela e deixe cozinhar por 15-18 minutos", "Não mexa durante o cozimento", "Desligue o fogo quando a água secar completamente", "Deixe descansar tampado por 5 minutos antes de servir"])
+    - tips: Dica prática (ex: "Se o arroz grudar no fundo, adicione um fio de óleo e mexa delicadamente")
 
 ${userFavorites.length > 0 ? `PREFERÊNCIAS DO USUÁRIO (priorize): ${userFavorites.join(", ")}` : ""}
 ${userDislikes.length > 0 ? `EVITE (usuário não gosta): ${userDislikes.join(", ")}` : ""}
@@ -130,7 +136,23 @@ FORMATO DE SAÍDA (JSON):
     {"category": "Hortifruti", "item": "cenoura", "quantity": 1, "unit": "kg"}
   ],
   "prepSchedule": [
-    {"order": 1, "action": "Pré-aquecer forno a 200°C", "duration": 10, "parallel": false}
+    {
+      "order": 1,
+      "action": "Cozinhar arroz",
+      "duration": 25,
+      "parallel": false,
+      "details": [
+        "Lave 2 xícaras de arroz em água corrente até a água sair limpa",
+        "Coloque 4 xícaras de água em uma panela média",
+        "Adicione 1 colher de sopa de óleo e 1 colher de chá de sal",
+        "Ligue o fogo alto e espere ferver",
+        "Quando ferver, adicione o arroz lavado",
+        "Mexa uma vez e abaixe o fogo para médio-baixo",
+        "Tampe a panela e deixe cozinhar por 15-18 minutos",
+        "Desligue quando a água secar completamente"
+      ],
+      "tips": "Não mexa o arroz durante o cozimento para não grudar. Se grudar no fundo, adicione um fio de óleo."
+    }
   ],
   "estimatedCost": "baixo",
   "totalPrepTime": 90
@@ -217,6 +239,11 @@ Gere o plano completo em JSON.`;
                     action: { type: "string" },
                     duration: { type: "number" },
                     parallel: { type: "boolean" },
+                    details: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                    tips: { type: "string" },
                   },
                   required: ["order", "action", "duration", "parallel"],
                   additionalProperties: false,
