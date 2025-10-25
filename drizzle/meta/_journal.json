@@ -22,6 +22,20 @@
       "when": 1761386769840,
       "tag": "0002_keen_saracen",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1761393239851,
+      "tag": "0003_bitter_norman_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1761393293654,
+      "tag": "0004_lush_killmonger",
+      "breakpoints": true
     }
   ]
 }

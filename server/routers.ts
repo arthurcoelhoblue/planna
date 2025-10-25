@@ -53,7 +53,6 @@ export const appRouter = router({
           images: z.array(
             z.object({
               url: z.string().url(),
-              location: z.enum(["geladeira", "congelador", "armario"]),
             })
           ),
         })
@@ -72,7 +71,7 @@ export const appRouter = router({
           ingredients: z.string(),
           servings: z.number().min(1).max(20),
           exclusions: z.array(z.string()).optional(),
-          objective: z.enum(["praticidade", "economia", "desperdicio", "custo"]).optional(),
+          objective: z.enum(["praticidade", "economia", "normal", "aproveitamento", "desperdicio", "custo"]).optional(),
           varieties: z.number().min(1).max(6).optional(),
           allowNewIngredients: z.boolean().optional(),
           sophistication: z.enum(["simples", "gourmet"]).optional(),

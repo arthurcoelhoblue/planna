@@ -52,7 +52,7 @@ export async function generateMealPlan(params: {
   availableIngredients: string[];
   servings: number;
   exclusions?: string[];
-  objective?: "praticidade" | "economia" | "desperdicio" | "custo";
+  objective?: "praticidade" | "economia" | "normal" | "aproveitamento" | "desperdicio" | "custo";
   userFavorites?: string[];
   userDislikes?: string[];
   varieties?: number;
@@ -63,7 +63,7 @@ export async function generateMealPlan(params: {
     availableIngredients,
     servings,
     exclusions = [],
-    objective = "praticidade",
+    objective = "normal",
     userFavorites = [],
     userDislikes = [],
     varieties,
@@ -76,16 +76,16 @@ export async function generateMealPlan(params: {
 
   // Define o foco baseado no objetivo
   let objectiveFocus = "";
-  if (objective === "desperdicio") {
+  if (objective === "aproveitamento" || objective === "desperdicio") {
     objectiveFocus =
-      "FOCO EM REDUÇÃO DE DESPERDÍCIO: Aproveite cascas (ex: chips de casca de batata), talos (ex: talos de brócolis refogados), sobras e partes normalmente descartadas. Sugira receitas criativas de aproveitamento.";
-  } else if (objective === "custo") {
-    objectiveFocus =
-      "FOCO EM MENOR CUSTO: Priorize ingredientes mais baratos e acessíveis. Evite cortes nobres ou ingredientes sofisticados. Maximize o rendimento.";
+      "FOCO EM APROVEITAMENTO TOTAL: Aproveite cascas (ex: chips de casca de batata), talos (ex: talos de brócolis refogados), sobras e partes normalmente descartadas. Sugira receitas criativas de aproveitamento. Reduza desperdício ao máximo.";
   } else if (objective === "economia") {
     objectiveFocus = "FOCO EM ECONOMIA: Aproveitamento máximo dos ingredientes e menor custo.";
-  } else {
+  } else if (objective === "praticidade") {
     objectiveFocus = "FOCO EM PRATICIDADE: Preparo rápido e simples, sem complicação.";
+  } else {
+    // normal ou custo
+    objectiveFocus = "MODO NORMAL: Receitas tradicionais, práticas e balanceadas.";
   }
 
   const ingredientsRule = allowNewIngredients

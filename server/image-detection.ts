@@ -47,7 +47,7 @@ FORMATO DE SAÍDA (JSON):
           content: [
             {
               type: "text",
-              text: `Analise esta imagem de ${location} e liste todos os ingredientes que você consegue identificar.`,
+              text: `Analise esta imagem e liste todos os ingredientes que você consegue identificar.`,
             },
             {
               type: "image_url",
@@ -110,16 +110,16 @@ FORMATO DE SAÍDA (JSON):
  * Processa múltiplas imagens e consolida os ingredientes detectados
  */
 export async function detectIngredientsFromMultipleImages(
-  images: Array<{ url: string; location: "geladeira" | "congelador" | "armario" }>
+  images: Array<{ url: string }>
 ): Promise<string[]> {
   const allIngredients: DetectedIngredient[] = [];
 
   for (const image of images) {
     try {
-      const detected = await detectIngredientsFromImage({ imageUrl: image.url, location: image.location });
+      const detected = await detectIngredientsFromImage({ imageUrl: image.url });
       allIngredients.push(...detected);
     } catch (error) {
-      console.error(`Erro ao processar imagem de ${image.location}:`, error);
+      console.error(`Erro ao processar imagem:`, error);
       // Continua com as outras imagens
     }
   }

@@ -15,11 +15,9 @@ import { Link, useLocation } from "wouter";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { ExclusionsModal } from "@/components/ExclusionsModal";
 import { storagePut } from "../../../server/storage";
-
 interface UploadedImage {
   file: File;
   preview: string;
-  location: "geladeira" | "congelador" | "armario";
   url?: string;
 }
 
@@ -32,16 +30,14 @@ export default function Planner() {
   const [servings, setServings] = useState([10]);
   const [exclusions, setExclusions] = useState<string[]>([]);
   const [showExclusionsModal, setShowExclusionsModal] = useState(false);
-  const [objective, setObjective] = useState<"desperdicio" | "custo">("desperdicio");
+  const [objective, setObjective] = useState<"normal" | "aproveitamento">("normal");
   const [sophistication, setSophistication] = useState<"simples" | "gourmet">("simples");
   const [planMode, setPlanMode] = useState<"weekly" | "single">("weekly");
   const [varieties, setVarieties] = useState([3]);
   const [allowNewIngredients, setAllowNewIngredients] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
-  const [currentImageLocation, setCurrentImageLocation] = useState<
-    "geladeira" | "congelador" | "armario"
-  >("geladeira");
   const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [shouldReplaceIngredients, setShouldReplaceIngredients] = useState<boolean | null>(null);
 
   const generatePlan = trpc.mealPlan.generate.useMutation({
     onSuccess: (data) => {
@@ -65,7 +61,6 @@ export default function Planner() {
     const newImage: UploadedImage = {
       file,
       preview,
-      location: currentImageLocation,
     };
 
     setUploadedImages([...uploadedImages, newImage]);
@@ -87,11 +82,22 @@ export default function Planner() {
       return;
     }
 
+    // Se já tem ingredientes, perguntar se quer substituir
+    if (ingredients.trim() && shouldReplaceIngredients === null) {
+      const replace = window.confirm(
+        "Você já tem ingredientes no campo. Deseja:\n\nOK = Substituir tudo\nCancelar = Adicionar aos existentes"
+      );
+      setShouldReplaceIngredients(replace);
+      if (!replace) {
+        // Continua com a detecção, mas vai adicionar
+      }
+    }
+
     setIsProcessingImages(true);
 
     try {
       // Upload das imagens para S3 primeiro
-      const uploadedUrls: Array<{ url: string; location: "geladeira" | "congelador" | "armario" }> = [];
+      const uploadedUrls: Array<{ url: string }> = [];
       
       for (const img of uploadedImages) {
         // Converte File para base64 ou Blob
@@ -113,7 +119,7 @@ export default function Planner() {
         }
 
         const { url } = await response.json();
-        uploadedUrls.push({ url, location: img.location });
+        uploadedUrls.push({ url });
       }
 
       // Detecta ingredientes nas imagens
@@ -124,7 +130,21 @@ export default function Planner() {
       // Atualiza o campo de ingredientes
       if (result.ingredients && result.ingredients.length > 0) {
         const newIngredients = result.ingredients.join(", ");
-        setIngredients((prev) => (prev ? `${prev}, ${newIngredients}` : newIngredients));
+        
+        // Se deve substituir ou se não tem ingredientes ainda
+        if (shouldReplaceIngredients || !ingredients.trim()) {
+          setIngredients(newIngredients);
+        } else {
+          // Adiciona aos existentes
+          const existing = ingredients.split(",").map(i => i.trim()).filter(Boolean);
+          const detected = result.ingredients;
+          const uniqueSet = new Set([...existing, ...detected]);
+          const combined = Array.from(uniqueSet);
+          setIngredients(combined.join(", "));
+        }
+        
+        // Reseta o estado de substituição
+        setShouldReplaceIngredients(null);
       } else {
         alert("Não foi possível detectar ingredientes nas imagens. Tente com fotos mais claras.");
       }
@@ -269,41 +289,13 @@ export default function Planner() {
                   <div className="flex items-center">
                     <Label>Detectar ingredientes por foto (opcional)</Label>
                     <InfoTooltip
-                      content="Tire até 3 fotos diferentes: geladeira, congelador e armário. A IA vai identificar os ingredientes automaticamente!"
+                      content="Tire ou escolha fotos dos seus ingredientes. A IA vai identificar automaticamente!"
                       examples={[
-                        "Foto 1: Geladeira (frutas, legumes, laticínios)",
-                        "Foto 2: Congelador (carnes, peixes congelados)",
-                        "Foto 3: Armário (grãos, massas, conservas)",
+                        "Tire fotos da geladeira, armário ou despensa",
+                        "Ou escolha fotos da galeria",
+                        "Até 3 fotos por vez",
                       ]}
                     />
-                  </div>
-
-                  {/* Seletor de localização */}
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={currentImageLocation === "geladeira" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentImageLocation("geladeira")}
-                    >
-                      🧊 Geladeira
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={currentImageLocation === "congelador" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentImageLocation("congelador")}
-                    >
-                      ❄️ Congelador
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={currentImageLocation === "armario" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentImageLocation("armario")}
-                    >
-                      🗄️ Armário
-                    </Button>
                   </div>
 
                   {/* Botão de upload */}
@@ -322,7 +314,6 @@ export default function Planner() {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
-                      capture="environment"
                       onChange={handleImageUpload}
                       className="hidden"
                     />
@@ -358,13 +349,7 @@ export default function Planner() {
                             alt={`Preview ${index + 1}`}
                             className="w-full h-32 object-cover rounded-lg border-2 border-border"
                           />
-                          <div className="absolute top-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                            {img.location === "geladeira"
-                              ? "🧊"
-                              : img.location === "congelador"
-                              ? "❄️"
-                              : "🗄️"}
-                          </div>
+
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(index)}
@@ -583,30 +568,30 @@ export default function Planner() {
                   <div className="grid grid-cols-2 gap-4">
                     <button
                       type="button"
-                      onClick={() => setObjective("desperdicio")}
+                      onClick={() => setObjective("normal")}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
-                        objective === "desperdicio"
+                        objective === "normal"
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
                       }`}
                     >
-                      <div className="font-semibold mb-1">♻️ Redução de Desperdício</div>
+                           <div className="font-semibold">🍽️ Modo Normal</div>
                       <div className="text-sm text-muted-foreground">
-                        Aproveita cascas, talos e sobras
+                        Receitas tradicionais e práticas
                       </div>
                     </button>
                     <button
                       type="button"
-                      onClick={() => setObjective("custo")}
+                      onClick={() => setObjective("aproveitamento")}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
-                        objective === "custo"
+                        objective === "aproveitamento"
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
                       }`}
                     >
-                      <div className="font-semibold mb-1">💰 Menor Custo</div>
+                      <div className="font-semibold">♻️ Aproveitamento Total</div>
                       <div className="text-sm text-muted-foreground">
-                        Prioriza ingredientes mais baratos
+                        Aproveita cascas, talos, sobras e reduz desperdício
                       </div>
                     </button>
                   </div>
