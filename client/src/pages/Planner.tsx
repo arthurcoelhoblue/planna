@@ -60,23 +60,24 @@ export default function Planner() {
 
   const detectFromMultipleImages = trpc.ingredients.detectFromMultipleImages.useMutation();
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Limita a 3 fotos
-    if (uploadedImages.length >= 3) {
-      alert("Você pode enviar no máximo 3 fotos");
-      return;
+    const newImages: UploadedImage[] = [];
+    const remainingSlots = 3 - uploadedImages.length;
+    const filesToAdd = Math.min(files.length, remainingSlots);
+
+    for (let i = 0; i < filesToAdd; i++) {
+      const file = files[i];
+      const preview = URL.createObjectURL(file);
+      newImages.push({
+        file,
+        preview,
+      });
     }
 
-    const preview = URL.createObjectURL(file);
-    const newImage: UploadedImage = {
-      file,
-      preview,
-    };
-
-    setUploadedImages([...uploadedImages, newImage]);
+    setUploadedImages([...uploadedImages, ...newImages]);
     
     // Limpa o input para permitir upload da mesma imagem novamente
     if (fileInputRef.current) {
@@ -332,6 +333,7 @@ export default function Planner() {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={handleImageUpload}
                       className="hidden"
                     />
@@ -371,7 +373,8 @@ export default function Planner() {
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(index)}
-                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1.5 shadow-lg hover:scale-110 transition-transform"
+                            aria-label="Remover foto"
                           >
                             <X className="w-4 h-4" />
                           </button>
