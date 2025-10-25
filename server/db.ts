@@ -89,4 +89,80 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Planna - Meal Planning Queries
+
+import { dishFeedback, InsertDishFeedback, InsertPlan, InsertSession, InsertUserPreference, plans, sessions, userPreferences } from "../drizzle/schema";
+import { desc } from "drizzle-orm";
+
+export async function createUserPreference(pref: InsertUserPreference) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(userPreferences).values(pref);
+  return result;
+}
+
+export async function getUserPreference(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
+  return result[0] || null;
+}
+
+export async function updateUserPreference(userId: number, updates: Partial<InsertUserPreference>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(userPreferences).set(updates).where(eq(userPreferences.userId, userId));
+}
+
+export async function createSession(session: InsertSession) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(sessions).values(session);
+  return result[0].insertId;
+}
+
+export async function getSessionById(sessionId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
+  return result[0] || null;
+}
+
+export async function getUserSessions(userId: number, limit: number = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(sessions).where(eq(sessions.userId, userId)).orderBy(desc(sessions.createdAt)).limit(limit);
+}
+
+export async function createPlan(plan: InsertPlan) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(plans).values(plan);
+  return result[0].insertId;
+}
+
+export async function getPlanById(planId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(plans).where(eq(plans.id, planId)).limit(1);
+  return result[0] || null;
+}
+
+export async function getPlanBySessionId(sessionId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(plans).where(eq(plans.sessionId, sessionId)).limit(1);
+  return result[0] || null;
+}
+
+export async function createDishFeedback(feedback: InsertDishFeedback) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(dishFeedback).values(feedback);
+}
+
+export async function getUserDishFeedback(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(dishFeedback).where(eq(dishFeedback.userId, userId));
+}
