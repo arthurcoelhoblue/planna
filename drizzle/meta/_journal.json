@@ -43,6 +43,13 @@
       "when": 1761399419395,
       "tag": "0005_complex_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1763219717686,
+      "tag": "0006_same_pride",
+      "breakpoints": true
     }
   ]
 }

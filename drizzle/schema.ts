@@ -34,6 +34,9 @@ export const userPreferences = mysqlTable("user_preferences", {
   exclusions: text("exclusions"), // JSON array of excluded ingredients
   favorites: text("favorites"), // JSON array of favorite ingredients
   skillLevel: mysqlEnum("skillLevel", ["beginner", "intermediate", "advanced"]).default("intermediate"),
+  dietType: varchar("dietType", { length: 100 }), // Nome da dieta escolhida
+  dietProfile: text("dietProfile"), // JSON do perfil completo da dieta
+  maxKcalPerServing: int("maxKcalPerServing"), // Limite de calorias por porção
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

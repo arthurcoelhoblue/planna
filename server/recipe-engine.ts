@@ -9,6 +9,8 @@ export interface Ingredient {
   name: string;
   quantity: number;
   unit: string;
+  kcal?: number; // Calorias do ingrediente na quantidade especificada
+  kcalPer100?: number; // Calorias por 100g/100ml (referência)
 }
 
 export interface Dish {
@@ -19,6 +21,8 @@ export interface Dish {
   servings: number;
   prepTime: number; // em minutos
   variations?: string[]; // Sugestões de variação
+  totalKcal?: number; // Calorias totais da receita
+  kcalPerServing?: number; // Calorias por porção
 }
 
 export interface ShoppingItem {
@@ -43,6 +47,8 @@ export interface MealPlan {
   prepSchedule: PrepStep[];
   estimatedCost: "baixo" | "médio" | "alto";
   totalPrepTime: number;
+  totalKcal?: number; // Calorias totais do plano
+  avgKcalPerServing?: number; // Média de calorias por porção
 }
 
 /**
