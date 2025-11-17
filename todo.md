@@ -60,3 +60,17 @@
 - [ ] Adicionar seção de pricing na LP
 - [ ] Integrar calorias e dietas no frontend
 
+
+
+### 9. Integração Frontend (Calorias + Dietas + Pricing)
+- [x] Adicionar campo de tipo de dieta no OnboardingModal
+- [x] Adicionar campo de limite calórico no Planner
+- [ ] Exibir calorias por ingrediente no PlanView
+- [ ] Exibir calorias totais e por porção no PlanView
+- [ ] Exibir perfil de dieta no PlanView (se aplicável)
+- [ ] Criar seção de pricing na Landing Page
+- [ ] Criar modal de upgrade quando atingir limite
+- [ ] Adicionar banner de upgrade para usuários free
+- [ ] Documentar configuração de webhook no README
+
+

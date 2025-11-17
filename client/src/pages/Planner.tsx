@@ -33,6 +33,7 @@ export default function Planner() {
   const [showExclusionsModal, setShowExclusionsModal] = useState(false);
   const [objective, setObjective] = useState<"normal" | "aproveitamento">("normal");
   const [sophistication, setSophistication] = useState<"simples" | "gourmet">("simples");
+  const [calorieLimit, setCalorieLimit] = useState<number | null>(null);
   const [planMode, setPlanMode] = useState<"weekly" | "single">("weekly");
   const [varieties, setVarieties] = useState([3]);
   const [allowNewIngredients, setAllowNewIngredients] = useState(false);
@@ -510,6 +511,33 @@ export default function Planner() {
                         Elaborado e refinado
                       </div>
                     </button>
+                  </div>
+                </div>
+
+                {/* Limite Calórico */}
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Label>Limite de calorias por porção (opcional)</Label>
+                    <InfoTooltip
+                      content="Defina um limite máximo de calorias por porção. O sistema ajustará as receitas automaticamente."
+                      examples={[
+                        "400-600 kcal: refeição leve",
+                        "600-800 kcal: refeição padrão",
+                        "800+ kcal: refeição completa",
+                      ]}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Ex: 600"
+                      value={calorieLimit || ""}
+                      onChange={(e) => setCalorieLimit(e.target.value ? parseInt(e.target.value) : null)}
+                      min="200"
+                      max="2000"
+                      step="50"
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">kcal</span>
                   </div>
                 </div>
 

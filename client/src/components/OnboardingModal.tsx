@@ -16,7 +16,9 @@ interface OnboardingModalProps {
 }
 
 export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
+  const [step, setStep] = useState<1 | 2>(1);
   const [skillLevel, setSkillLevel] = useState<"beginner" | "intermediate" | "advanced">("intermediate");
+  const [dietType, setDietType] = useState<string>("");
 
   const savePreferences = trpc.preferences.update.useMutation({
     onSuccess: () => {
@@ -24,8 +26,15 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
     },
   });
 
+  const handleNext = () => {
+    setStep(2);
+  };
+
   const handleSubmit = () => {
-    savePreferences.mutate({ skillLevel });
+    savePreferences.mutate({ 
+      skillLevel,
+      dietType: dietType || undefined 
+    });
   };
 
   return (
@@ -39,7 +48,9 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
           </div>
           <DialogTitle className="text-center text-2xl">Bem-vindo ao Planna!</DialogTitle>
           <DialogDescription className="text-center">
-            Para personalizar sua experiência, nos conte: qual é seu nível de experiência na cozinha?
+            {step === 1 
+              ? "Para personalizar sua experiência, nos conte: qual é seu nível de experiência na cozinha?"
+              : "Você segue alguma dieta específica? (Opcional)"}
           </DialogDescription>
         </DialogHeader>
 
@@ -90,14 +101,44 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
           </button>
         </div>
 
-        <Button
-          onClick={handleSubmit}
-          disabled={savePreferences.isPending}
-          className="w-full"
-          size="lg"
-        >
-          {savePreferences.isPending ? "Salvando..." : "Continuar"}
-        </Button>
+        {step === 1 ? (
+          <Button onClick={handleNext} className="w-full" size="lg">
+            Próximo
+          </Button>
+        ) : (
+          <>
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={dietType}
+                onChange={(e) => setDietType(e.target.value)}
+                placeholder="Ex: vegetariana, vegana, low carb, sem glúten..."
+                className="w-full px-4 py-3 border-2 border-border rounded-lg focus:outline-none focus:border-primary"
+              />
+              <p className="text-xs text-muted-foreground">
+                Deixe em branco se não segue nenhuma dieta específica
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setStep(1)}
+                variant="outline"
+                className="flex-1"
+                size="lg"
+              >
+                Voltar
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={savePreferences.isPending}
+                className="flex-1"
+                size="lg"
+              >
+                {savePreferences.isPending ? "Salvando..." : "Finalizar"}
+              </Button>
+            </div>
+          </>
+        )}
 
         <p className="text-xs text-center text-muted-foreground">
           Você pode alterar isso depois nas configurações

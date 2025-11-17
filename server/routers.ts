@@ -286,6 +286,7 @@ export const appRouter = router({
           exclusions: z.array(z.string()).optional(),
           favorites: z.array(z.string()).optional(),
           skillLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+          dietType: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -301,6 +302,9 @@ export const appRouter = router({
         }
         if (input.skillLevel !== undefined) {
           updates.skillLevel = input.skillLevel;
+        }
+        if (input.dietType !== undefined) {
+          updates.dietType = input.dietType;
         }
 
         if (!existing) {
