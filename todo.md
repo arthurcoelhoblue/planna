@@ -54,8 +54,9 @@
 - [x] Configurar produtos e preços no Stripe
 - [x] Criar schema de assinaturas no banco
 - [x] Implementar checkout de assinatura
-- [ ] Implementar webhook de eventos Stripe
-- [ ] Criar portal do cliente (gerenciar assinatura)
-- [ ] Implementar paywall (limitar acesso free vs premium)
+- [x] Implementar webhook de eventos Stripe
+- [x] Criar portal do cliente (gerenciar assinatura)
+- [x] Implementar paywall (limitar acesso free vs premium)
 - [ ] Adicionar seção de pricing na LP
+- [ ] Integrar calorias e dietas no frontend
 

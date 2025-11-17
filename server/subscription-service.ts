@@ -11,6 +11,7 @@ import { subscriptions, users } from "../drizzle/schema";
  */
 export async function upsertSubscription(data: {
   userId: number;
+  stripeCustomerId?: string;
   stripeSubscriptionId: string;
   stripePriceId: string;
   status: "active" | "canceled" | "past_due" | "trialing";
@@ -31,6 +32,7 @@ export async function upsertSubscription(data: {
     await db
       .update(subscriptions)
       .set({
+        stripeCustomerId: data.stripeCustomerId,
         status: data.status,
         stripePriceId: data.stripePriceId,
         currentPeriodEnd: data.currentPeriodEnd,
@@ -41,6 +43,7 @@ export async function upsertSubscription(data: {
     // Criar
     await db.insert(subscriptions).values({
       userId: data.userId,
+      stripeCustomerId: data.stripeCustomerId,
       stripeSubscriptionId: data.stripeSubscriptionId,
       stripePriceId: data.stripePriceId,
       status: data.status,

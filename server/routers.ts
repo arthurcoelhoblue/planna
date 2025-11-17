@@ -108,6 +108,17 @@ export const appRouter = router({
           ...(userPref?.exclusions ? JSON.parse(userPref.exclusions) : []),
         ];
 
+        // Paywall: verificar limite mensal
+        const { hasReachedMonthlyLimit } = await import("./paywall");
+        const tier = ctx.user.subscriptionTier || "free";
+        const reachedLimit = await hasReachedMonthlyLimit(ctx.user.id, tier);
+
+        if (reachedLimit) {
+          throw new Error(
+            `Você atingiu o limite de planos do mês. Faça upgrade para Pro ou Premium para criar mais planos!`
+          );
+        }
+
         // Generate plan
         const plan = await generateMealPlan({
           availableIngredients,
@@ -354,6 +365,24 @@ export const appRouter = router({
 
         return { checkoutUrl: session.url };
       }),
+    createPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
+      const stripe = (await import("./_core/stripe")).default;
+      const { getUserActiveSubscription } = await import("./subscription-service");
+
+      // Buscar subscription ativa
+      const subscription = await getUserActiveSubscription(ctx.user.id);
+      if (!subscription || !subscription.stripeCustomerId) {
+        throw new Error("Nenhuma assinatura ativa encontrada");
+      }
+
+      // Criar portal session
+      const session = await stripe.billingPortal.sessions.create({
+        customer: subscription.stripeCustomerId,
+        return_url: `${ctx.req.headers.origin}/planner`,
+      });
+
+      return { portalUrl: session.url };
+    }),
   }),
 });
 

@@ -101,6 +101,7 @@ export type InsertDishFeedback = typeof dishFeedback.$inferInsert;
 export const subscriptions = mysqlTable("subscriptions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }), // Customer ID from Stripe
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }).notNull().unique(), // Subscription ID from Stripe
   stripePriceId: varchar("stripePriceId", { length: 255 }).notNull(), // Price ID for this subscription
   status: mysqlEnum("status", ["active", "canceled", "past_due", "trialing"]).notNull(),

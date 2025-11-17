@@ -57,6 +57,13 @@
       "when": 1763375640074,
       "tag": "0007_typical_shatterstar",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1763387368162,
+      "tag": "0008_solid_anita_blake",
+      "breakpoints": true
     }
   ]
 }
