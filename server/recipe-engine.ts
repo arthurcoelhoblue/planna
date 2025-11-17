@@ -65,6 +65,8 @@ export async function generateMealPlan(params: {
   allowNewIngredients?: boolean;
   sophistication?: "simples" | "gourmet";
   skillLevel?: "beginner" | "intermediate" | "advanced";
+  calorieLimit?: number;
+  dietType?: string;
 }): Promise<MealPlan> {
   const {
     availableIngredients,
@@ -77,6 +79,8 @@ export async function generateMealPlan(params: {
     allowNewIngredients = false,
     sophistication = "simples",
     skillLevel = "intermediate",
+    calorieLimit,
+    dietType,
   } = params;
 
   // Calcula número de pratos base
@@ -106,6 +110,14 @@ export async function generateMealPlan(params: {
     ? "NÍVEL AVANÇADO: Maximize tarefas em paralelo (parallel: true quando possível), reduza 15% do tempo estimado, pode assumir conhecimento de técnicas."
     : "NÍVEL INTERMEDIÁRIO: Equilíbrio entre detalhamento e eficiência, algumas tarefas em paralelo quando lógico.";
 
+  const calorieRule = calorieLimit
+    ? `LIMITE CALÓRICO: Cada porção deve ter NO MÁXIMO ${calorieLimit} kcal. Ajuste as quantidades de ingredientes para respeitar este limite. Calcule e informe as calorias de cada receita e por porção.`
+    : "";
+
+  const dietRule = dietType
+    ? `DIETA ESPECIAL: O usuário segue a dieta "${dietType}". RESPEITE RIGOROSAMENTE as restrições alimentares desta dieta. Use APENAS ingredientes permitidos.`
+    : "";
+
   // Monta o prompt para a IA
   const systemPrompt = `Você é um planejador de marmitas minimalista e prático.
 
@@ -118,10 +130,12 @@ REGRAS IMPORTANTES:
 6. ${objectiveFocus}
 7. ${sophisticationRule}
 8. ${skillLevelRule}
-9. CÁLCULO DE TEMPO: O totalPrepTime deve considerar tarefas paralelas. Se 2 tarefas de 30min cada são paralelas, contam como 30min (não 60min). Some apenas o tempo real necessário.
-8. Passos curtos e acionáveis no título, mas com detalhamento completo
-9. Tempo total de preparo deve ser otimizado (batch cooking)
-10. IMPORTANTE: Para cada passo do prepSchedule, inclua:
+${calorieRule ? `9. ${calorieRule}` : ""}
+${dietRule ? `10. ${dietRule}` : ""}
+11. CÁLCULO DE TEMPO: O totalPrepTime deve considerar tarefas paralelas. Se 2 tarefas de 30min cada são paralelas, contam como 30min (não 60min). Some apenas o tempo real necessário.
+12. Passos curtos e acionáveis no título, mas com detalhamento completo
+13. Tempo total de preparo deve ser otimizado (batch cooking)
+14. IMPORTANTE: Para cada passo do prepSchedule, inclua:
     - action: Título resumido (ex: "Cozinhar arroz")
     - details: Array com passos MUITO DETALHADOS para iniciantes (ex: ["Lave 2 xícaras de arroz em água corrente até a água sair limpa", "Coloque 4 xícaras de água em uma panela média", "Adicione 1 colher de sopa de óleo e 1 colher de chá de sal", "Ligue o fogo alto e espere ferver", "Quando ferver, adicione o arroz lavado", "Mexa uma vez e abaixe o fogo para médio-baixo", "Tampe a panela e deixe cozinhar por 15-18 minutos", "Não mexa durante o cozimento", "Desligue o fogo quando a água secar completamente", "Deixe descansar tampado por 5 minutos antes de servir"])
     - tips: Dica prática (ex: "Se o arroz grudar no fundo, adicione um fio de óleo e mexa delicadamente")
@@ -136,12 +150,14 @@ FORMATO DE SAÍDA (JSON):
       "name": "Nome do Prato",
       "category": "completo",
       "ingredients": [
-        {"name": "ingrediente", "quantity": 500, "unit": "g"}
+        {"name": "ingrediente", "quantity": 500, "unit": "g", "kcal": 685, "kcalPer100": 137}
       ],
       "steps": ["Passo 1", "Passo 2"],
       "servings": ${Math.ceil(servings / numDishes)},
       "prepTime": 30,
-      "variations": ["Variação 1", "Variação 2"]
+      "variations": ["Variação 1", "Variação 2"],
+      "totalKcal": 2500,
+      "kcalPerServing": 417
     }
   ],
   "shoppingList": [
@@ -168,7 +184,9 @@ FORMATO DE SAÍDA (JSON):
   ],
   "estimatedCost": "baixo",
   "totalPrepTime": 90,
-  "note": "Tempo calculado considerando tarefas em paralelo. Iniciantes podem precisar de mais tempo."
+  "note": "Tempo calculado considerando tarefas em paralelo. Iniciantes podem precisar de mais tempo.",
+  "totalKcal": 7500,
+  "avgKcalPerServing": 417
 }`;
 
   const userPrompt = `Crie um plano semanal de marmitas com os seguintes parâmetros:
@@ -177,8 +195,10 @@ Ingredientes disponíveis: ${availableIngredients.join(", ")}
 Número de marmitas: ${servings}
 Exclusões: ${exclusions.length > 0 ? exclusions.join(", ") : "nenhuma"}
 Objetivo: ${objective}
+${calorieLimit ? `Limite calórico por porção: ${calorieLimit} kcal` : ""}
+${dietType ? `Dieta: ${dietType}` : ""}
 
-Gere o plano completo em JSON.`;
+Gere o plano completo em JSON com informações nutricionais detalhadas.`;
 
   try {
     const response = await invokeLLM({
@@ -209,6 +229,8 @@ Gere o plano completo em JSON.`;
                           name: { type: "string" },
                           quantity: { type: "number" },
                           unit: { type: "string" },
+                          kcal: { type: "number" },
+                          kcalPer100: { type: "number" },
                         },
                         required: ["name", "quantity", "unit"],
                         additionalProperties: false,
@@ -224,6 +246,8 @@ Gere o plano completo em JSON.`;
                       type: "array",
                       items: { type: "string" },
                     },
+                    totalKcal: { type: "number" },
+                    kcalPerServing: { type: "number" },
                   },
                   required: ["name", "category", "ingredients", "steps", "servings", "prepTime"],
                   additionalProperties: false,
@@ -265,6 +289,8 @@ Gere o plano completo em JSON.`;
               estimatedCost: { type: "string", enum: ["baixo", "médio", "alto"] },
               totalPrepTime: { type: "number" },
               note: { type: "string" },
+              totalKcal: { type: "number" },
+              avgKcalPerServing: { type: "number" },
             },
             required: ["dishes", "shoppingList", "prepSchedule", "estimatedCost", "totalPrepTime"],
             additionalProperties: false,

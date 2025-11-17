@@ -118,6 +118,12 @@ export default function PlanView() {
   const dishes = typeof plan.dishes === 'string' ? JSON.parse(plan.dishes) : plan.dishes;
   const shoppingList = typeof plan.shoppingList === 'string' ? JSON.parse(plan.shoppingList) : plan.shoppingList;
   const prepSchedule = typeof plan.prepSchedule === 'string' ? JSON.parse(plan.prepSchedule) : plan.prepSchedule;
+  
+  // Dados nutricionais (podem não existir em planos antigos)
+  const planData = {
+    totalKcal: plan.totalKcal,
+    avgKcalPerServing: plan.avgKcalPerServing,
+  };
 
   // Agrupa lista de compras por categoria
   const groupedShopping = shoppingList.reduce((acc: any, item: any) => {
@@ -234,6 +240,37 @@ export default function PlanView() {
             </div>
           </div>
 
+          {/* Resumo Nutricional */}
+          {(planData.totalKcal || planData.avgKcalPerServing) && (
+            <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-orange-800">
+                  🍎 Informações Nutricionais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {planData.totalKcal && (
+                    <div className="bg-white/60 p-4 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Calorias Totais do Plano</p>
+                      <p className="text-3xl font-bold text-orange-600">
+                        {Math.round(planData.totalKcal).toLocaleString()} kcal
+                      </p>
+                    </div>
+                  )}
+                  {planData.avgKcalPerServing && (
+                    <div className="bg-white/60 p-4 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Média por Porção</p>
+                      <p className="text-3xl font-bold text-orange-600">
+                        {Math.round(planData.avgKcalPerServing)} kcal
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Cardápio */}
           <Card>
             <CardHeader>
@@ -253,6 +290,11 @@ export default function PlanView() {
                       <h3 className="text-xl font-semibold">{dish.name}</h3>
                       <p className="text-sm text-muted-foreground">
                         {dish.servings} porções • {dish.prepTime} min
+                        {dish.kcalPerServing && (
+                          <span className="ml-2 font-medium text-orange-600">
+                            • {Math.round(dish.kcalPerServing)} kcal/porção
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -278,10 +320,15 @@ export default function PlanView() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <h4 className="font-medium mb-2 text-sm">Ingredientes:</h4>
-                      <ul className="text-sm space-y-1 text-muted-foreground">
+                       <ul className="text-sm space-y-1 text-muted-foreground">
                         {dish.ingredients.map((ing: any, i: number) => (
                           <li key={i}>
                             • {ing.name}: {ing.quantity} {ing.unit}
+                            {ing.kcal && (
+                              <span className="text-xs text-orange-600 ml-1">
+                                ({Math.round(ing.kcal)} kcal)
+                              </span>
+                            )}
                           </li>
                         ))}
                       </ul>

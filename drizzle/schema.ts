@@ -73,6 +73,8 @@ export const plans = mysqlTable("plans", {
   shoppingList: text("shoppingList").notNull(), // JSON array of shopping items by category
   prepSchedule: text("prepSchedule").notNull(), // JSON array of ordered prep steps
   exportUrl: varchar("exportUrl", { length: 512 }), // PDF export URL
+  totalKcal: int("totalKcal"), // Total calories of the plan
+  avgKcalPerServing: int("avgKcalPerServing"), // Average calories per serving
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

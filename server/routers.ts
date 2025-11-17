@@ -75,6 +75,7 @@ export const appRouter = router({
           varieties: z.number().min(1).max(6).optional(),
           allowNewIngredients: z.boolean().optional(),
           sophistication: z.enum(["simples", "gourmet"]).optional(),
+          calorieLimit: z.number().min(200).max(2000).optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
@@ -129,6 +130,8 @@ export const appRouter = router({
           allowNewIngredients: input.allowNewIngredients,
           sophistication: input.sophistication,
           skillLevel: userPref?.skillLevel || "intermediate",
+          calorieLimit: input.calorieLimit,
+          dietType: userPref?.dietType || undefined,
           userFavorites,
           userDislikes,
         });
@@ -148,6 +151,8 @@ export const appRouter = router({
           dishes: JSON.stringify(plan.dishes),
           shoppingList: JSON.stringify(plan.shoppingList),
           prepSchedule: JSON.stringify(plan.prepSchedule),
+          totalKcal: plan.totalKcal ? Math.round(plan.totalKcal) : undefined,
+          avgKcalPerServing: plan.avgKcalPerServing ? Math.round(plan.avgKcalPerServing) : undefined,
         });
 
         return {

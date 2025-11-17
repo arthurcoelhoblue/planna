@@ -64,6 +64,13 @@
       "when": 1763387368162,
       "tag": "0008_solid_anita_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1763395680336,
+      "tag": "0009_easy_talon",
+      "breakpoints": true
     }
   ]
 }

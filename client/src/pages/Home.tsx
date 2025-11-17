@@ -265,6 +265,151 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">
+              Escolha o plano ideal para você
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Comece grátis e faça upgrade quando precisar de mais planos
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Free Plan */}
+            <Card className="border-2 hover:border-primary/50 transition-all">
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold mb-2">Gratuito</h3>
+                  <div className="text-4xl font-bold text-primary mb-2">
+                    R$ 0
+                  </div>
+                  <p className="text-sm text-muted-foreground">Para sempre</p>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>2 planos por mês</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Receitas com IA</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Lista de compras</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Roteiro de preparo</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Exportar PDF</span>
+                  </li>
+                </ul>
+                <Link href="/planner">
+                  <Button variant="outline" className="w-full">
+                    Começar Grátis
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Pro Plan */}
+            <Card className="border-2 border-primary shadow-lg relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">
+                Mais Popular
+              </div>
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold mb-2">Pro</h3>
+                  <div className="text-4xl font-bold text-primary mb-2">
+                    R$ 29,90
+                  </div>
+                  <p className="text-sm text-muted-foreground">por mês</p>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span className="font-medium">10 planos por mês</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Tudo do plano Gratuito</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span className="font-medium">Informações nutricionais</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span className="font-medium">Suporte a dietas especiais</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Histórico ilimitado</span>
+                  </li>
+                </ul>
+                <Link href="/planner">
+                  <Button className="w-full">
+                    Assinar Pro
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Premium Plan */}
+            <Card className="border-2 hover:border-primary/50 transition-all">
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold mb-2">Premium</h3>
+                  <div className="text-4xl font-bold text-primary mb-2">
+                    R$ 49,90
+                  </div>
+                  <p className="text-sm text-muted-foreground">por mês</p>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span className="font-medium">Planos ilimitados</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Tudo do plano Pro</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span className="font-medium">Suporte prioritário</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span className="font-medium">Acesso antecipado a novos recursos</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span>Personalização avançada</span>
+                  </li>
+                </ul>
+                <Link href="/planner">
+                  <Button variant="outline" className="w-full">
+                    Assinar Premium
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-sm text-muted-foreground">
+              🔒 Pagamento seguro via Stripe • Cancele quando quiser • Sem taxas ocultas
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Final */}
       <section className="py-20 bg-gradient-to-br from-primary/10 to-accent/10">
         <div className="container mx-auto px-4 text-center">

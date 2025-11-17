@@ -65,12 +65,14 @@
 ### 9. Integração Frontend (Calorias + Dietas + Pricing)
 - [x] Adicionar campo de tipo de dieta no OnboardingModal
 - [x] Adicionar campo de limite calórico no Planner
+- [ ] Integrar cálculo de calorias no backend do generateMealPlan
 - [ ] Exibir calorias por ingrediente no PlanView
 - [ ] Exibir calorias totais e por porção no PlanView
 - [ ] Exibir perfil de dieta no PlanView (se aplicável)
-- [ ] Criar seção de pricing na Landing Page
+- [ ] Criar seção de pricing na Landing Page com tabela comparativa
 - [ ] Criar modal de upgrade quando atingir limite
 - [ ] Adicionar banner de upgrade para usuários free
+- [ ] Preparar variáveis de ambiente para Price IDs
 - [ ] Documentar configuração de webhook no README
 
 
