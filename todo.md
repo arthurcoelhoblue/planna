@@ -47,3 +47,15 @@
 - [ ] Testar ajuste automático de porções
 - [ ] Validar consistência entre UI, backend e IA
 
+
+
+### 8. Integração Stripe (Pagamento)
+- [x] Adicionar feature Stripe ao projeto
+- [x] Configurar produtos e preços no Stripe
+- [x] Criar schema de assinaturas no banco
+- [x] Implementar checkout de assinatura
+- [ ] Implementar webhook de eventos Stripe
+- [ ] Criar portal do cliente (gerenciar assinatura)
+- [ ] Implementar paywall (limitar acesso free vs premium)
+- [ ] Adicionar seção de pricing na LP
+

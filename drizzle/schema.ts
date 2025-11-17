@@ -17,6 +17,9 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  // Stripe integration
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }), // Stripe Customer ID
+  subscriptionTier: mysqlEnum("subscriptionTier", ["free", "pro", "premium"]).default("free").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -90,3 +93,21 @@ export const dishFeedback = mysqlTable("dish_feedback", {
 
 export type DishFeedback = typeof dishFeedback.$inferSelect;
 export type InsertDishFeedback = typeof dishFeedback.$inferInsert;
+
+/**
+ * Stripe subscriptions - minimal schema following Stripe best practices
+ * Only stores IDs for API reference, fetches live data from Stripe API
+ */
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }).notNull().unique(), // Subscription ID from Stripe
+  stripePriceId: varchar("stripePriceId", { length: 255 }).notNull(), // Price ID for this subscription
+  status: mysqlEnum("status", ["active", "canceled", "past_due", "trialing"]).notNull(),
+  currentPeriodEnd: timestamp("currentPeriodEnd"), // Cache for quick access checks
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;

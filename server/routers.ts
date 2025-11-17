@@ -304,6 +304,57 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // Stripe / Subscription router
+  subscription: router({
+    plans: publicProcedure.query(() => {
+      const { PRICING_PLANS } = require("./stripe-products");
+      return PRICING_PLANS;
+    }),
+    current: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserActiveSubscription } = await import("./subscription-service");
+      const subscription = await getUserActiveSubscription(ctx.user.id);
+      return {
+        tier: ctx.user.subscriptionTier,
+        subscription,
+      };
+    }),
+    createCheckout: protectedProcedure
+      .input(z.object({ priceId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const stripe = (await import("./_core/stripe")).default;
+        const { PRICING_PLANS } = await import("./stripe-products");
+
+        // Verificar se price ID é válido
+        const plan = PRICING_PLANS.find((p) => p.priceId === input.priceId);
+        if (!plan) {
+          throw new Error("Plano inválido");
+        }
+
+        // Criar checkout session
+        const session = await stripe.checkout.sessions.create({
+          mode: "subscription",
+          customer_email: ctx.user.email || undefined,
+          client_reference_id: ctx.user.id.toString(),
+          line_items: [
+            {
+              price: input.priceId,
+              quantity: 1,
+            },
+          ],
+          success_url: `${ctx.req.headers.origin}/planner?checkout=success`,
+          cancel_url: `${ctx.req.headers.origin}/?checkout=canceled`,
+          allow_promotion_codes: true,
+          metadata: {
+            user_id: ctx.user.id.toString(),
+            customer_email: ctx.user.email || "",
+            customer_name: ctx.user.name || "",
+          },
+        });
+
+        return { checkoutUrl: session.url };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

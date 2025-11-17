@@ -50,6 +50,13 @@
       "when": 1763219717686,
       "tag": "0006_same_pride",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1763375640074,
+      "tag": "0007_typical_shatterstar",
+      "breakpoints": true
     }
   ]
 }
