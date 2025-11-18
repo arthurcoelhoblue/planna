@@ -1,7 +1,9 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { AuthModal } from "@/components/AuthModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { APP_TITLE, getLoginUrl } from "@/const";
+import DashboardLayout from "@/components/DashboardLayout";
+import { APP_TITLE } from "@/const";
 import { trpc } from "@/lib/trpc";
 import {
   Check,
@@ -23,6 +25,8 @@ export default function PlanView() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
   const { data: plan, isLoading } = trpc.mealPlan.getById.useQuery(
     { planId: parseInt(planId || "0") },
@@ -82,11 +86,27 @@ export default function PlanView() {
             <CardDescription>Você precisa estar logado para ver este plano</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <a href={getLoginUrl()} className="block">
-              <Button className="w-full">Fazer Login</Button>
-            </a>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setAuthMode("login");
+                setAuthModalOpen(true);
+              }}
+            >
+              Fazer Login
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setAuthMode("register");
+                setAuthModalOpen(true);
+              }}
+            >
+              Criar Conta
+            </Button>
             <Link href="/">
-              <Button variant="outline" className="w-full">
+              <Button variant="ghost" className="w-full">
                 Voltar para Home
               </Button>
             </Link>
@@ -135,9 +155,10 @@ export default function PlanView() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <DashboardLayout>
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background">
+        {/* Header */}
+        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer">
@@ -505,8 +526,14 @@ export default function PlanView() {
             </Link>
           </div>
         </div>
-      </main>
-    </div>
+        </main>
+        <AuthModal
+          open={authModalOpen}
+          onOpenChange={setAuthModalOpen}
+          defaultMode={authMode}
+        />
+      </div>
+    </DashboardLayout>
   );
 }
 

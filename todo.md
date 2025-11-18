@@ -219,3 +219,35 @@
 - [x] Redirecionar para checkout Stripe
 - [x] Abrir AuthModal se usuário não autenticado
 
+
+
+
+### 17. Implementação Completa Conforme Especificação
+
+#### Checkpoint 1 - Autenticação e UX Base
+- [x] Login 100% local sem Manus
+- [x] DashboardLayout com logout visível
+- [x] Menu e logo corretos
+- [x] Envolver Planner em DashboardLayout
+- [x] Envolver History em DashboardLayout
+- [x] Envolver PlanView em DashboardLayout
+- [x] Corrigir bug da vírgula decimal no split de ingredientes (3 lugares)
+- [x] PlanView.tsx: substituir getLoginUrl por AuthModal
+
+#### Checkpoint 2 - IA Sob Controle
+- [x] sanitizePlanIngredients funcionando
+- [x] Filtro de fotos por dicionário
+- [ ] Reforçar objectiveFocus (normal vs aproveitamento)
+- [ ] Atualizar skillLevelRule no prompt
+- [ ] Implementar função enforceSkillLevel
+- [ ] Chamar enforceSkillLevel em generateMealPlan
+- [ ] Testar com 3 níveis de experiência
+
+#### Checkpoint 3 - Estoque, Limite e Upgrade
+- [ ] Passar ingredientsWithStock para generateMealPlan
+- [ ] Criar server/stock-check.ts com analyzeStock
+- [ ] Incluir stockStatus no retorno de mealPlan.generate
+- [ ] Implementar modal de estoque insuficiente
+- [ ] Implementar modal de upgrade ao bater limite
+- [ ] Testar fluxo completo de upgrade
+

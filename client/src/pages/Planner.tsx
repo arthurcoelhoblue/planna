@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -154,7 +155,11 @@ export default function Planner() {
           setIngredients(newIngredients);
         } else {
           // Adiciona aos existentes
-          const existing = ingredients.split(",").map(i => i.trim()).filter(Boolean);
+          const existing = ingredients
+            .replace(/(\d),(\d)/g, "$1·$2") // Protege vírgula decimal
+            .split(",")
+            .map(i => i.trim().replace(/·/g, ",")) // Restaura vírgula
+            .filter(Boolean);
           const detected = result.ingredients;
           const uniqueSet = new Set([...existing, ...detected]);
           const combined = Array.from(uniqueSet);
@@ -195,8 +200,9 @@ export default function Planner() {
 
   // Extrai ingredientes do texto para o modal de exclusões
   const availableIngredients = ingredients
+    .replace(/(\d),(\d)/g, "$1·$2") // Protege vírgula decimal
     .split(/[,;\n]/)
-    .map((i) => i.trim())
+    .map((i) => i.trim().replace(/·/g, ",")) // Restaura vírgula
     .filter((i) => i.length > 0);
 
   if (authLoading) {
@@ -249,9 +255,10 @@ export default function Planner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <DashboardLayout>
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background">
+        {/* Header */}
+        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer">
@@ -441,8 +448,9 @@ export default function Planner() {
                   {/* Preview de estoque parseado */}
                   {ingredients.trim() && (() => {
                     const parsed = ingredients
+                      .replace(/(\d),(\d)/g, "$1·$2") // Protege vírgula decimal
                       .split(/[,;\n]/)
-                      .map(item => item.trim())
+                      .map(item => item.trim().replace(/·/g, ",")) // Restaura vírgula
                       .filter(item => item.length > 0)
                       .map(item => {
                         // Tenta extrair quantidade: "2kg frango" -> { qty: 2, unit: "kg", name: "frango" }
@@ -755,15 +763,16 @@ export default function Planner() {
         </div>
       </main>
 
-      {/* Modal de Exclusões */}
-      <ExclusionsModal
-        open={showExclusionsModal}
-        onOpenChange={setShowExclusionsModal}
-        availableIngredients={availableIngredients}
-        currentExclusions={exclusions}
-        onSave={setExclusions}
-      />
-    </div>
+        {/* Modal de Exclusões */}
+        <ExclusionsModal
+          open={showExclusionsModal}
+          onOpenChange={setShowExclusionsModal}
+          availableIngredients={availableIngredients}
+          currentExclusions={exclusions}
+          onSave={setExclusions}
+        />
+      </div>
+    </DashboardLayout>
   );
 }
 
