@@ -645,6 +645,107 @@ export default function Planner() {
                   </div>
                 </div>
 
+                {/* Nível de Experiência */}
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Label>Nível de experiência na cozinha</Label>
+                    <InfoTooltip
+                      content="Escolha seu nível para receitas adequadas à sua habilidade"
+                      examples={[
+                        "Iniciante: receitas simples, até 7 passos",
+                        "Intermediário: receitas moderadas, até 10 passos",
+                        "Avançado: receitas elaboradas, sem limite de passos",
+                      ]}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSkillLevel("beginner")}
+                      className={`p-3 border-2 rounded-lg text-center transition-all ${
+                        skillLevel === "beginner"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="font-semibold text-sm mb-1">👶 Iniciante</div>
+                      <div className="text-xs text-muted-foreground">Até 7 passos</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSkillLevel("intermediate")}
+                      className={`p-3 border-2 rounded-lg text-center transition-all ${
+                        skillLevel === "intermediate"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="font-semibold text-sm mb-1">👨‍🍳 Intermediário</div>
+                      <div className="text-xs text-muted-foreground">Até 10 passos</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSkillLevel("advanced")}
+                      className={`p-3 border-2 rounded-lg text-center transition-all ${
+                        skillLevel === "advanced"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="font-semibold text-sm mb-1">👨‍🍳 Avançado</div>
+                      <div className="text-xs text-muted-foreground">Sem limites</div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tempo Disponível */}
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Label>Tempo disponível para cozinhar (opcional)</Label>
+                    <InfoTooltip
+                      content="Informe quanto tempo você tem por dia para preparar suas marmitas"
+                      examples={[
+                        "1-2 horas: receitas rápidas",
+                        "3-4 horas: receitas moderadas",
+                        "5+ horas: receitas elaboradas",
+                      ]}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Ex: 2"
+                      value={availableTime || ""}
+                      onChange={(e) => setAvailableTime(e.target.value ? parseInt(e.target.value) : null)}
+                      min="1"
+                      max="24"
+                      step="1"
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">horas/dia</span>
+                  </div>
+                </div>
+
+                {/* Tipo de Dieta */}
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Label>Tipo de dieta (opcional)</Label>
+                    <InfoTooltip
+                      content="Informe se você segue alguma dieta específica"
+                      examples={[
+                        "Vegetariana, Vegana, Low-carb",
+                        "Sem gluten, Sem lactose",
+                        "Paleo, Cetogênica",
+                      ]}
+                    />
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="Ex: Vegetariana"
+                    value={dietType}
+                    onChange={(e) => setDietType(e.target.value)}
+                  />
+                </div>
+
                 {/* Exclusões */}
                 <div className="space-y-2">
                   <div className="flex items-center">

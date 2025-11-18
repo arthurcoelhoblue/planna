@@ -291,13 +291,13 @@
 - [ ] Integrar com createCheckout
 
 #### Planner - Campos Conforme Especificação
-- [ ] Campo "Nível de experiência" (select)
-- [ ] Campo "Tempo disponível" (input ou slider)
-- [ ] Campo "Modo de preparo" (radio: Normal/Aproveitamento)
-- [ ] Texto explicativo sobre vírgula/ponto decimal
-- [ ] Checkbox "Permitir novos ingredientes"
-- [ ] Campo "Tipo de dieta"
-- [ ] Campo "Limite de calorias por porção"
+- [x] Campo "Nível de experiência" (3 botões: Iniciante/Intermediário/Avançado)
+- [x] Campo "Tempo disponível" (input numérico em horas)
+- [x] Campo "Modo de preparo" (já existe como "objective")
+- [x] Texto explicativo sobre vírgula/ponto decimal (no card de preview)
+- [x] Checkbox "Permitir novos ingredientes" (já existe)
+- [x] Campo "Tipo de dieta" (input texto)
+- [x] Campo "Limite de calorias por porção" (já existe)
 
 #### Logout Visível
 - [ ] Adicionar botão "Sair" no top bar (canto superior direito)
