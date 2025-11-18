@@ -74,6 +74,21 @@ export default function Planner() {
     }
   }, [isAuthenticated, preferences]);
 
+  // Auto-preencher preferências salvas do Dashboard
+  useEffect(() => {
+    if (preferences) {
+      if (preferences.dietType) {
+        setDietType(preferences.dietType);
+      }
+      if (preferences.skillLevel) {
+        setSkillLevel(preferences.skillLevel as "beginner" | "intermediate" | "advanced");
+      }
+      if (preferences.maxKcalPerServing) {
+        setCalorieLimit(preferences.maxKcalPerServing);
+      }
+    }
+  }, [preferences]);
+
   const generatePlan = trpc.mealPlan.generate.useMutation({
     onSuccess: (data) => {
       setLocation(`/plan/${data.planId}`);

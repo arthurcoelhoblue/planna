@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { BarChart3, ChefHat, Clock, Package, Sparkles, TrendingUp } from "lucide-react";
+import { BarChart3, ChefHat, Clock, Package, Sparkles, TrendingUp, Calendar } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -165,6 +166,57 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Evolution Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Evolução de Planos
+            </CardTitle>
+            <CardDescription>Últimos 6 meses de atividade</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {stats?.plansByMonth && stats.plansByMonth.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={stats.plansByMonth}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="month" 
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <YAxis 
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px',
+                    }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="#16a34a" 
+                    strokeWidth={2}
+                    dot={{ fill: '#16a34a', r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Planos Criados"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Nenhum dado de evolução ainda. Crie mais planos para ver o gráfico!</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Top Ingredients */}
