@@ -162,6 +162,9 @@
 - [x] Testar com vírgula e ponto decimal
 - [x] Corrigir split para não quebrar números decimais com vírgula
 - [x] Validar compatibilidade reversa (entrada sem quantidade)
+- [x] Suportar 3 casos obrigatórios: vírgulas decimais com separadores, pontos decimais sem separadores, quantidade após o nome
+- [x] Implementar heurística de separação sem vírgulas no backend
+- [x] Criar 7 testes unitários (todos passando)
 
 #### Passo 2 - Enforcement de Estoque (Implementado)
 - [x] Evoluir availableIngredients para aceitar objetos com quantidade
@@ -466,4 +469,33 @@
 - [x] Caso 2: 3 misturas + 15 porções com poucos ingredientes
 - [x] Validar que misturas respeitam input na maioria absoluta dos casos
 - [x] Validar que porções totais fazem sentido e são visíveis na interface
+
+
+
+
+### 25. Corrigir e Aprimorar Parsing de Ingredientes (Vírgulas Decimais)
+
+#### Problema Atual
+- [x] "2,5 kg de arroz" é quebrado como "2" e "5 kg de arroz"
+- [x] Vírgula usada cegamente como separador de item
+- [x] Sem vírgula entre ingredientes, sistema não entende direito
+
+#### Backend - Parsing Inteligente
+- [x] Auditar função atual de parsing de ingredientes
+- [x] Proteger vírgula/ponto decimal entre números (2,5 ou 2.5)
+- [x] Usar vírgula como separador apenas após "quantidade + unidade + nome"
+- [x] Suporte a ponto decimal (2.5 kg = 2,5 kg)
+- [x] Heurísticas para parsing sem vírgulas (2kg frango 1kg arroz)
+- [x] Padrões: número + unidade + nome detectados automaticamente
+
+#### Frontend - Exibição Correta
+- [x] Exibir quantidades como compreendidas pelo back (2,5 kg)
+- [x] Modal de exclusões não deve quebrar "2,5 kg arroz" em "2" e "5 kg arroz"
+- [x] Consistência entre back e front
+
+#### Testes Obrigatórios
+- [x] Teste 1: "2,5 kg frango, 1 kg arroz, 500g feijão" → 3 ingredientes corretos
+- [x] Teste 2: "2.5kg frango 1kg arroz 500g feijão" → 3 ingredientes corretos
+- [x] Teste 3: "frango 2,5 kg arroz 1kg feijão 500g" → 3 ingredientes corretos
+- [ ] QA completo no navegador como usuário real
 

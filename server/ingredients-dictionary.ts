@@ -336,37 +336,69 @@ export function parseIngredients(input: string): Array<{
   quantity?: number | null;
   inputUnit?: string | null;
 }> {
-  // Separa por vírgula (exceto em números), ponto-e-vírgula ou quebra de linha
-  // Primeiro, protege números decimais com vírgula
-  const protectedInput = input.replace(/(\d),(\d)/g, "$1·$2"); // Substitui vírgula decimal por ·
-  
-  const items = protectedInput
-    .split(/[,;\n]/)
-    .map(item => item.trim())
-    .map(item => item.replace(/·/g, ",")) // Restaura vírgula decimal
-    .filter(item => item.length > 0);
+  // PASSO 1: Normalizar pontos decimais para vírgulas (2.5 -> 2,5)
+  let normalized = input.replace(/(\d)\.(\d)/g, "$1,$2");
 
+  // PASSO 2: Proteger vírgulas decimais (2,5 -> 2·5)
+  normalized = normalized.replace(/(\d),(\d)/g, "$1·$2");
+
+  // PASSO 3: Tentar separar por vírgula primeiro
+  let items = normalized.split(/[,;\n]/).map(item => item.trim()).filter(item => item.length > 0);
+
+  // PASSO 4: Se houver apenas 1 item, tentar heurística de separação sem vírgulas
+  if (items.length === 1) {
+    // Detectar padrões: "2kg frango 1kg arroz 500g feijão" OU "frango 2kg arroz 1kg feijão 500g"
+    // Estratégia: usar regex para capturar padrões completos
+    const text = items[0];
+    
+    // Padrão 1: quantidade no início (2kg frango) - captura até próximo número ou fim
+    const pattern1 = /(\d+(?:·\d+)?)\s*([a-zA-Zçãõéêíóú]+)?\s+([a-zA-Zçãõéêíóú\s]+?)(?=\s*\d|$)/g;
+    const matches1 = Array.from(text.matchAll(pattern1));
+    
+    // Padrão 2: quantidade no final (frango 2kg) - captura até próximo padrão ou fim
+    const pattern2 = /([a-zA-Zçãõéêíóú]+)\s+(\d+(?:·\d+)?)\s*([a-zA-Zçãõéêíóú]+)?(?=\s+[a-zA-Zçãõéêíóú]+\s+\d|$)/g;
+    const matches2 = Array.from(text.matchAll(pattern2));
+    
+    // Usar o padrão que encontrou mais matches
+    const matches = matches1.length >= matches2.length ? matches1 : matches2;
+    
+    if (matches.length > 1) {
+      // Múltiplos ingredientes detectados!
+      items = matches.map(m => m[0].trim());
+    }
+  }
+
+  // PASSO 5: Restaurar vírgulas decimais em todos os items
+  items = items.map(item => item.replace(/·/g, ","));
+
+  // PASSO 6: Parsear cada item individualmente
   return items.map(item => {
-    // Tenta extrair quantidade e unidade: ex "2kg frango", "500g arroz", "10 ovos"
-    // Regex: número (inteiro ou decimal) + espaço opcional + unidade opcional + espaço + nome
-    const qtyMatch = item.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Zçãõéêíóú]+)?\s+(.*)$/);
     let quantity: number | null = null;
     let inputUnit: string | null = null;
     let namePart = item;
 
+    // Tentar padrão: "2,5 kg frango" (quantidade no início)
+    let qtyMatch = item.match(/^(\d+(?:,\d+)?)\s*([a-zA-Zçãõéêíóú]+)?\s+(.+)$/);
+    
     if (qtyMatch) {
-      // Extrai quantidade (converte vírgula para ponto)
       quantity = parseFloat(qtyMatch[1].replace(",", "."));
-      // Extrai unidade (se existir)
       inputUnit = qtyMatch[2] ? qtyMatch[2].toLowerCase() : null;
-      // Extrai nome do ingrediente
       namePart = qtyMatch[3];
+    } else {
+      // Tentar padrão: "frango 2,5 kg" (quantidade no final)
+      qtyMatch = item.match(/^(.+?)\s+(\d+(?:,\d+)?)\s*([a-zA-Zçãõéêíóú]+)?$/);
+      if (qtyMatch) {
+        namePart = qtyMatch[1];
+        quantity = parseFloat(qtyMatch[2].replace(",", "."));
+        inputUnit = qtyMatch[3] ? qtyMatch[3].toLowerCase() : null;
+      }
     }
 
     const normalized = normalizeIngredient(namePart);
     if (normalized) {
       return {
         original: item,
+        name: namePart,
         canonical: normalized.canonical,
         category: normalized.category,
         unit: normalized.unit,
@@ -377,6 +409,7 @@ export function parseIngredients(input: string): Array<{
     }
     return {
       original: item,
+      name: namePart,
       canonical: null,
       category: null,
       unit: null,

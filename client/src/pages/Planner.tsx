@@ -535,14 +535,33 @@ export default function Planner() {
 
                   {/* Preview de estoque parseado */}
                   {ingredients.trim() && (() => {
-                    const parsed = ingredients
-                      .replace(/(\d),(\d)/g, "$1·$2") // Protege vírgula decimal
-                      .split(/[,;\n]/)
-                      .map(item => item.trim().replace(/·/g, ",")) // Restaura vírgula
-                      .filter(item => item.length > 0)
+                    // Normalizar pontos decimais para vírgulas (2.5 -> 2,5)
+                    let normalized = ingredients.replace(/(\d)\.(\d)/g, "$1,$2");
+                    
+                    // Proteger vírgulas decimais (2,5 -> 2·5)
+                    normalized = normalized.replace(/(\d),(\d)/g, "$1·$2");
+                    
+                    // Tentar separar por vírgula primeiro
+                    let items = normalized.split(/[,;\n]/).map(item => item.trim()).filter(item => item.length > 0);
+                    
+                    // Se houver apenas 1 item, tentar heurística de separação sem vírgulas
+                    if (items.length === 1) {
+                      const text = items[0];
+                      // Padrão: quantidade no início (2kg frango) - captura até próximo número ou fim
+                      const pattern = /(\d+(?:·\d+)?)\s*([a-zA-Zçãõéêíóú]+)?\s+([a-zA-Zçãõéêíóú\s]+?)(?=\s*\d|$)/g;
+                      const matches = Array.from(text.matchAll(pattern));
+                      if (matches.length > 1) {
+                        items = matches.map(m => m[0].trim());
+                      }
+                    }
+                    
+                    // Restaurar vírgulas decimais
+                    items = items.map(item => item.replace(/·/g, ","));
+                    
+                    const parsed = items
                       .map(item => {
                         // Tenta extrair quantidade: "2kg frango" -> { qty: 2, unit: "kg", name: "frango" }
-                        const qtyMatch = item.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Zçãõéêíóú]+)?\s+(.*)$/);
+                        const qtyMatch = item.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Zçãõéêíóú]+)?\s*(.*)$/);
                         if (qtyMatch) {
                           return {
                             original: item,
