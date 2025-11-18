@@ -251,3 +251,55 @@
 - [ ] Implementar modal de upgrade ao bater limite
 - [ ] Testar fluxo completo de upgrade
 
+
+
+
+### 18. Implementação 2FA por Email + Especificação de Interface Completa
+
+#### Backend - 2FA por Email
+- [x] Criar tabela email_verification_codes (userId, code, expiresAt, verified)
+- [x] Implementar geração de código de 6 dígitos
+- [x] Implementar envio de email com código (via notification API)
+- [x] Atualizar registerLocal para criar usuário pendente + enviar código
+- [x] Criar endpoint verifyEmailCode
+- [x] Criar endpoint resendVerificationCode
+- [x] Adicionar campo emailVerified na tabela users
+
+#### Frontend - AuthModal com 3 Estados
+- [x] Adicionar estado "verify" no AuthModal
+- [x] Criar tela de confirmação de código (6 dígitos)
+- [x] Implementar botão "Reenviar código"
+- [x] Implementar botão "Voltar"
+- [x] Transição automática após registro para tela de verificação
+- [x] Validação de código e fechamento do modal após sucesso
+- [x] Input formatado (6 dígitos, apenas números, fonte mono)
+
+#### PlanView - Badges Obrigatórias
+- [ ] Badge "Dieta: [nome]" ou "Dieta não encontrada"
+- [ ] Badge "Modo: Normal" ou "Modo: Aproveitamento total"
+- [ ] Badge "Nível: Iniciante/Intermediário/Avançado"
+- [ ] Badge "Tempo disponível: X horas"
+- [ ] Badge "Tempo estimado: Y horas (margem: ~30-50%)"
+- [ ] Badge "Novo ingrediente: Não" (quando allowNewIngredients = false)
+- [ ] Badge de complexidade em cada receita ("Simples" ou "Gourmet")
+
+#### Modal de Upgrade ao Bater Limite
+- [ ] Criar UpgradeModal.tsx
+- [ ] Detectar erro de limite no Planner (onError)
+- [ ] Mostrar plano atual e planos disponíveis
+- [ ] Botões "Assinar Pro" e "Assinar Premium"
+- [ ] Integrar com createCheckout
+
+#### Planner - Campos Conforme Especificação
+- [ ] Campo "Nível de experiência" (select)
+- [ ] Campo "Tempo disponível" (input ou slider)
+- [ ] Campo "Modo de preparo" (radio: Normal/Aproveitamento)
+- [ ] Texto explicativo sobre vírgula/ponto decimal
+- [ ] Checkbox "Permitir novos ingredientes"
+- [ ] Campo "Tipo de dieta"
+- [ ] Campo "Limite de calorias por porção"
+
+#### Logout Visível
+- [ ] Adicionar botão "Sair" no top bar (canto superior direito)
+- [ ] Sempre visível em todas as páginas logadas
+

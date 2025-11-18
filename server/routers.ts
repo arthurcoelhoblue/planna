@@ -17,7 +17,7 @@ export const appRouter = router({
       } as const;
     }),
 
-    // Local authentication (email/password)
+    // Local authentication (email/password) with 2FA
     registerLocal: publicProcedure
       .input(
         z.object({
@@ -26,12 +26,12 @@ export const appRouter = router({
           password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
         })
       )
-      .mutation(async ({ input, ctx }) => {
-        const { getDb, upsertUser } = await import("./db");
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
         const { hashPassword } = await import("./_core/passwords");
-        const { users } = await import("../drizzle/schema");
+        const { users, emailVerificationCodes } = await import("../drizzle/schema");
         const { eq } = await import("drizzle-orm");
-        const { sdk } = await import("./_core/sdk");
+        const { generateVerificationCode, sendVerificationEmail } = await import("./_core/emailVerification");
 
         const db = await getDb();
         if (!db) throw new Error("Database not available");
@@ -53,18 +53,102 @@ export const appRouter = router({
         // Generate internal openId for local users
         const openId = `local_${crypto.randomUUID()}`;
 
-        // Insert user
-        await db.insert(users).values({
+        // Insert user (pending verification)
+        const [newUser] = await db.insert(users).values({
           openId,
           name: input.name,
           email: input.email,
           passwordHash,
           loginMethod: "local",
+          emailVerified: false, // Pending verification
+        }).$returningId();
+
+        // Generate verification code
+        const code = generateVerificationCode();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+        // Save code to database
+        await db.insert(emailVerificationCodes).values({
+          userId: newUser.id,
+          code,
+          expiresAt,
+          verified: false,
         });
 
+        // Send verification email
+        const emailSent = await sendVerificationEmail(input.email, code, input.name);
+
+        if (!emailSent) {
+          console.error("[Auth] Failed to send verification email");
+          // Don't throw error, allow user to resend
+        }
+
+        return { 
+          success: true, 
+          userId: newUser.id,
+          email: input.email,
+          message: "Código de verificação enviado para seu e-mail" 
+        };
+      }),
+
+    verifyEmailCode: publicProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          code: z.string().length(6, "Código deve ter 6 dígitos"),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const { getDb } = await import("./db");
+        const { users, emailVerificationCodes } = await import("../drizzle/schema");
+        const { eq, and, gt } = await import("drizzle-orm");
+        const { sdk } = await import("./_core/sdk");
+
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Find valid code
+        const codes = await db
+          .select()
+          .from(emailVerificationCodes)
+          .where(
+            and(
+              eq(emailVerificationCodes.userId, input.userId),
+              eq(emailVerificationCodes.code, input.code),
+              eq(emailVerificationCodes.verified, false),
+              gt(emailVerificationCodes.expiresAt, new Date())
+            )
+          )
+          .limit(1);
+
+        if (codes.length === 0) {
+          throw new Error("Código inválido ou expirado");
+        }
+
+        // Mark code as verified
+        await db
+          .update(emailVerificationCodes)
+          .set({ verified: true })
+          .where(eq(emailVerificationCodes.id, codes[0].id));
+
+        // Mark user as verified
+        await db
+          .update(users)
+          .set({ emailVerified: true })
+          .where(eq(users.id, input.userId));
+
+        // Get user data
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, input.userId))
+          .limit(1);
+
+        if (!user) throw new Error("Usuário não encontrado");
+
         // Create session
-        const token = await sdk.createSessionToken(openId, {
-          name: input.name,
+        const token = await sdk.createSessionToken(user.openId, {
+          name: user.name || "",
         });
 
         const cookieOptions = getSessionCookieOptions(ctx.req);
@@ -75,6 +159,61 @@ export const appRouter = router({
         });
 
         return { success: true, needsOnboarding: true };
+      }),
+
+    resendVerificationCode: publicProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { users, emailVerificationCodes } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const { generateVerificationCode, sendVerificationEmail } = await import("./_core/emailVerification");
+
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Get user
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, input.userId))
+          .limit(1);
+
+        if (!user || !user.email) {
+          throw new Error("Usuário não encontrado");
+        }
+
+        if (user.emailVerified) {
+          throw new Error("Email já verificado");
+        }
+
+        // Generate new code
+        const code = generateVerificationCode();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+        // Save new code
+        await db.insert(emailVerificationCodes).values({
+          userId: user.id,
+          code,
+          expiresAt,
+          verified: false,
+        });
+
+        // Send email
+        const emailSent = await sendVerificationEmail(user.email, code, user.name || undefined);
+
+        if (!emailSent) {
+          throw new Error("Falha ao enviar e-mail. Tente novamente.");
+        }
+
+        return { 
+          success: true, 
+          message: "Novo código enviado para seu e-mail" 
+        };
       }),
 
     loginLocal: publicProcedure

@@ -20,7 +20,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthModalProps) {
-  const [mode, setMode] = useState<"login" | "register" | "reset">(defaultMode);
+  const [mode, setMode] = useState<"login" | "register" | "reset" | "verify">(defaultMode);
   const [, setLocation] = useLocation();
 
   // Login state
@@ -31,6 +31,11 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
+
+  // Verification state
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+  const [pendingEmail, setPendingEmail] = useState("");
 
   // Reset state
   const [resetEmail, setResetEmail] = useState("");
@@ -48,6 +53,27 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
   });
 
   const registerMutation = trpc.auth.registerLocal.useMutation({
+    onSuccess: (data) => {
+      // Transition to verification mode
+      setPendingUserId(data.userId);
+      setPendingEmail(data.email);
+      setMode("verify");
+    },
+    onError: (error) => {
+      alert(error.message);
+    },
+  });
+
+  const resetMutation = trpc.auth.requestPasswordReset.useMutation({
+    onSuccess: () => {
+      setResetSent(true);
+    },
+    onError: (error) => {
+      alert(error.message);
+    },
+  });
+
+  const verifyMutation = trpc.auth.verifyEmailCode.useMutation({
     onSuccess: () => {
       onOpenChange(false);
       setLocation("/planner");
@@ -58,9 +84,9 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
     },
   });
 
-  const resetMutation = trpc.auth.requestPasswordReset.useMutation({
-    onSuccess: () => {
-      setResetSent(true);
+  const resendMutation = trpc.auth.resendVerificationCode.useMutation({
+    onSuccess: (data) => {
+      alert(data.message);
     },
     onError: (error) => {
       alert(error.message);
@@ -88,6 +114,22 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
     e.preventDefault();
     resetMutation.mutate({
       email: resetEmail,
+    });
+  };
+
+  const handleVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingUserId) return;
+    verifyMutation.mutate({
+      userId: pendingUserId,
+      code: verificationCode,
+    });
+  };
+
+  const handleResend = () => {
+    if (!pendingUserId) return;
+    resendMutation.mutate({
+      userId: pendingUserId,
     });
   };
 
@@ -230,6 +272,66 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
                   className="text-primary hover:underline"
                 >
                   Entrar
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+
+        {mode === "verify" && (
+          <>
+            <DialogHeader>
+              <DialogTitle>Confirme seu Email</DialogTitle>
+              <DialogDescription>
+                Enviamos um código de 6 dígitos para <strong>{pendingEmail}</strong>
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleVerify} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="verification-code">Código de Verificação</Label>
+                <Input
+                  id="verification-code"
+                  type="text"
+                  placeholder="000000"
+                  maxLength={6}
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                  required
+                  className="text-center text-2xl tracking-widest font-mono"
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={verifyMutation.isPending || verificationCode.length !== 6}
+              >
+                {verifyMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Verificando...
+                  </>
+                ) : (
+                  "Confirmar"
+                )}
+              </Button>
+              <div className="flex justify-between text-sm">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendMutation.isPending}
+                  className="text-primary hover:underline disabled:opacity-50"
+                >
+                  {resendMutation.isPending ? "Enviando..." : "Reenviar código"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("register");
+                    setVerificationCode("");
+                  }}
+                  className="text-muted-foreground hover:underline"
+                >
+                  Voltar
                 </button>
               </div>
             </form>
