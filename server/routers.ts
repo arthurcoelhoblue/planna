@@ -283,7 +283,7 @@ export const appRouter = router({
         const { getDb } = await import("./db");
         const { users, passwordResetTokens } = await import("../drizzle/schema");
         const { eq } = await import("drizzle-orm");
-        const { notifyOwner } = await import("./_core/notification");
+        const { sendPasswordResetEmail } = await import("./_core/email");
 
         const db = await getDb();
         if (!db) throw new Error("Database not available");
@@ -296,7 +296,7 @@ export const appRouter = router({
           .limit(1);
 
         const user = existing[0];
-        if (!user || user.loginMethod !== "local") {
+        if (!user || user.loginMethod !== "local" || !user.email) {
           // Don't reveal if email exists or not (security)
           return { success: true };
         }
@@ -312,12 +312,13 @@ export const appRouter = router({
           expiresAt,
         });
 
-        // Send email (via owner notification for now)
+        // Send password reset email
         const resetUrl = `${process.env.VITE_APP_URL || "http://localhost:3000"}/reset-password?token=${token}`;
-        await notifyOwner({
-          title: "Solicitação de Redefinição de Senha - Planna",
-          content: `Usuário: ${user.email}\n\nLink de redefinição: ${resetUrl}\n\nExpira em 1 hora.`,
-        });
+        const emailSent = await sendPasswordResetEmail(user.email, resetUrl, user.name || undefined);
+        
+        if (!emailSent) {
+          console.warn("[PasswordReset] Failed to send email, but token was created");
+        }
 
         return { success: true };
       }),
