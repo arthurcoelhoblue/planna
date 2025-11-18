@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthModal } from "@/components/AuthModal";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardLayout from "@/components/DashboardLayout";
 import { APP_TITLE } from "@/const";
@@ -260,6 +261,64 @@ export default function PlanView() {
               </Button>
             </div>
           </div>
+
+          {/* Parâmetros do Plano */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                ⚙️ Parâmetros do Plano
+              </CardTitle>
+              <CardDescription>
+                Configurações usadas para gerar este plano
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {/* Badge de Dieta */}
+                <Badge variant="outline" className="text-sm">
+                  🥗 Dieta: {plan.dietType || "Não especificada"}
+                </Badge>
+                
+                {/* Badge de Modo */}
+                <Badge variant="outline" className="text-sm">
+                  🔄 Modo: {plan.mode === "aproveitamento" ? "Aproveitamento total" : "Normal"}
+                </Badge>
+                
+                {/* Badge de Nível */}
+                <Badge variant="outline" className="text-sm">
+                  👨‍🍳 Nível: {plan.skillLevel === "beginner" ? "Iniciante" : plan.skillLevel === "intermediate" ? "Intermediário" : "Avançado"}
+                </Badge>
+                
+                {/* Badge de Tempo Disponível */}
+                {plan.availableTime && (
+                  <Badge variant="outline" className="text-sm">
+                    ⏰ Tempo disponível: {plan.availableTime}h
+                  </Badge>
+                )}
+                
+                {/* Badge de Tempo Estimado */}
+                {plan.estimatedTime && (
+                  <Badge variant="outline" className="text-sm">
+                    ⏱️ Tempo estimado: {plan.estimatedTime}h (margem: ~30-50%)
+                  </Badge>
+                )}
+                
+                {/* Badge de Novos Ingredientes */}
+                {plan.allowNewIngredients === false && (
+                  <Badge variant="secondary" className="text-sm">
+                    🚫 Novos ingredientes: Não
+                  </Badge>
+                )}
+                
+                {/* Badge de Limite Calórico */}
+                {plan.maxKcalPerServing && (
+                  <Badge variant="outline" className="text-sm">
+                    🔥 Limite: {plan.maxKcalPerServing} kcal/porção
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Resumo Nutricional */}
           {(planData.totalKcal || planData.avgKcalPerServing) && (

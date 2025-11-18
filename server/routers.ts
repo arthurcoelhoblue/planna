@@ -437,6 +437,9 @@ export const appRouter = router({
           allowNewIngredients: z.boolean().optional(),
           sophistication: z.enum(["simples", "gourmet"]).optional(),
           calorieLimit: z.number().min(200).max(2000).optional(),
+          skillLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+          availableTime: z.number().min(1).max(24).optional(),
+          dietType: z.string().optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {

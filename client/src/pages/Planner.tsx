@@ -17,6 +17,7 @@ import { InfoTooltip } from "@/components/InfoTooltip";
 import { ExclusionsModal } from "@/components/ExclusionsModal";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { AuthModal } from "@/components/AuthModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { storagePut } from "../../../server/storage";
 interface UploadedImage {
   file: File;
@@ -45,6 +46,11 @@ export default function Planner() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState("");
+  const [skillLevel, setSkillLevel] = useState<"beginner" | "intermediate" | "advanced">("intermediate");
+  const [availableTime, setAvailableTime] = useState<number | null>(null);
+  const [dietType, setDietType] = useState<string>("");
 
   const { data: preferences } = trpc.preferences.get.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -60,6 +66,15 @@ export default function Planner() {
   const generatePlan = trpc.mealPlan.generate.useMutation({
     onSuccess: (data) => {
       setLocation(`/plan/${data.planId}`);
+    },
+    onError: (error) => {
+      // Detecta erro de limite de planos
+      if (error.message.includes("limite") || error.message.includes("upgrade") || error.message.includes("plano")) {
+        setUpgradeReason(error.message);
+        setUpgradeModalOpen(true);
+      } else {
+        alert(error.message);
+      }
     },
   });
 
@@ -192,6 +207,10 @@ export default function Planner() {
         varieties: planMode === "single" ? 1 : varieties[0],
         allowNewIngredients,
         sophistication,
+        skillLevel,
+        availableTime: availableTime || undefined,
+        dietType: dietType || undefined,
+        calorieLimit: calorieLimit || undefined,
       });
     } catch (error) {
       console.error("Erro ao gerar plano:", error);
@@ -770,6 +789,13 @@ export default function Planner() {
           availableIngredients={availableIngredients}
           currentExclusions={exclusions}
           onSave={setExclusions}
+        />
+
+        {/* Modal de Upgrade */}
+        <UpgradeModal
+          open={upgradeModalOpen}
+          onOpenChange={setUpgradeModalOpen}
+          reason={upgradeReason}
         />
       </div>
     </DashboardLayout>

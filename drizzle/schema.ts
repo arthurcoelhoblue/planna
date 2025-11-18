@@ -77,6 +77,13 @@ export const plans = mysqlTable("plans", {
   exportUrl: varchar("exportUrl", { length: 512 }), // PDF export URL
   totalKcal: int("totalKcal"), // Total calories of the plan
   avgKcalPerServing: int("avgKcalPerServing"), // Average calories per serving
+  dietType: varchar("dietType", { length: 128 }), // Diet type (e.g., "vegetariana", "vegana")
+  mode: varchar("mode", { length: 64 }), // Mode: "normal" or "aproveitamento"
+  skillLevel: varchar("skillLevel", { length: 64 }), // Skill level: "beginner", "intermediate", "advanced"
+  availableTime: int("availableTime"), // Available time in hours
+  estimatedTime: int("estimatedTime"), // Estimated time in hours
+  allowNewIngredients: boolean("allowNewIngredients").default(true), // Whether to allow new ingredients
+  maxKcalPerServing: int("maxKcalPerServing"), // Max calories per serving limit
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
