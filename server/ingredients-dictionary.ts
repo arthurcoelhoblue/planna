@@ -325,6 +325,7 @@ export function normalizeIngredient(input: string): {
 
 /**
  * Processa entrada livre de ingredientes e retorna lista normalizada
+ * Suporta sintaxe com quantidade: "2kg frango", "500g arroz", "10 ovos"
  */
 export function parseIngredients(input: string): Array<{
   original: string;
@@ -332,15 +333,37 @@ export function parseIngredients(input: string): Array<{
   category: string | null;
   unit: string | null;
   confidence: "high" | "medium" | "low" | "unknown";
+  quantity?: number | null;
+  inputUnit?: string | null;
 }> {
-  // Separa por vírgula, ponto-e-vírgula ou quebra de linha
-  const items = input
+  // Separa por vírgula (exceto em números), ponto-e-vírgula ou quebra de linha
+  // Primeiro, protege números decimais com vírgula
+  const protectedInput = input.replace(/(\d),(\d)/g, "$1·$2"); // Substitui vírgula decimal por ·
+  
+  const items = protectedInput
     .split(/[,;\n]/)
     .map(item => item.trim())
+    .map(item => item.replace(/·/g, ",")) // Restaura vírgula decimal
     .filter(item => item.length > 0);
 
   return items.map(item => {
-    const normalized = normalizeIngredient(item);
+    // Tenta extrair quantidade e unidade: ex "2kg frango", "500g arroz", "10 ovos"
+    // Regex: número (inteiro ou decimal) + espaço opcional + unidade opcional + espaço + nome
+    const qtyMatch = item.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Zçãõéêíóú]+)?\s+(.*)$/);
+    let quantity: number | null = null;
+    let inputUnit: string | null = null;
+    let namePart = item;
+
+    if (qtyMatch) {
+      // Extrai quantidade (converte vírgula para ponto)
+      quantity = parseFloat(qtyMatch[1].replace(",", "."));
+      // Extrai unidade (se existir)
+      inputUnit = qtyMatch[2] ? qtyMatch[2].toLowerCase() : null;
+      // Extrai nome do ingrediente
+      namePart = qtyMatch[3];
+    }
+
+    const normalized = normalizeIngredient(namePart);
     if (normalized) {
       return {
         original: item,
@@ -348,6 +371,8 @@ export function parseIngredients(input: string): Array<{
         category: normalized.category,
         unit: normalized.unit,
         confidence: normalized.confidence,
+        quantity,
+        inputUnit,
       };
     }
     return {
@@ -356,6 +381,8 @@ export function parseIngredients(input: string): Array<{
       category: null,
       unit: null,
       confidence: "unknown" as const,
+      quantity,
+      inputUnit,
     };
   });
 }

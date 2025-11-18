@@ -149,3 +149,23 @@
 - [ ] (Futuro) Adicionar validação pós-processamento de complexity
 - [ ] Testar com sophistication = "simples" e "gourmet"
 
+
+
+
+### 14. Parser de Quantidades de Ingredientes
+
+#### Passo 1 - Parser (Implementar Agora)
+- [x] Atualizar parseIngredients para extrair quantidade
+- [x] Atualizar parseIngredients para extrair unidade
+- [x] Adicionar campos quantity e inputUnit no retorno
+- [x] Suportar formatos: "2kg frango", "500g arroz", "10 ovos"
+- [x] Testar com vírgula e ponto decimal
+- [x] Corrigir split para não quebrar números decimais com vírgula
+- [x] Validar compatibilidade reversa (entrada sem quantidade)
+
+#### Passo 2 - Enforcement de Estoque (Futuro)
+- [ ] Evoluir availableIngredients para aceitar objetos com quantidade
+- [ ] Instruir prompt do motor sobre limites de estoque
+- [ ] Validar que receitas não excedem estoque disponível
+- [ ] Adicionar UI para entrada de quantidades (opcional)
+
