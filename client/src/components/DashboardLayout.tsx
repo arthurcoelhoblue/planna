@@ -288,6 +288,14 @@ function DashboardLayoutContent({
                 </div>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={logout}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         )}
         <main className="flex-1 p-4">{children}</main>

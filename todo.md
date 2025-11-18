@@ -198,3 +198,24 @@
 - [x] Testar fluxo completo de login local
 - [x] Validar navegação entre páginas
 
+
+
+
+### 16. Adicionar Botão de Logout Visível e Checkout Stripe
+
+#### Logout
+- [x] Adicionar botão de logout no header mobile do DashboardLayout
+- [x] Botão visível com ícone LogOut
+- [x] Logout já existia no footer do sidebar (dropdown)
+- [x] Testar fluxo de logout
+
+#### Checkout Stripe
+- [x] Endpoint createCheckoutSession já existe no backend
+- [x] Adicionar import do trpc na Home
+- [x] Criar mutation createCheckout
+- [x] Criar handler handleSubscribe
+- [x] Substituir Links por botões com onClick
+- [x] Adicionar estados de loading ("Processando...")
+- [x] Redirecionar para checkout Stripe
+- [x] Abrir AuthModal se usuário não autenticado
+

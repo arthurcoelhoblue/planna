@@ -3,6 +3,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { APP_LOGO, APP_TITLE } from "@/const";
+import { trpc } from "@/lib/trpc";
 import { ChefHat, Clock, ShoppingCart, Sparkles, Star, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
@@ -42,9 +43,28 @@ export default function Home() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
+  const createCheckout = trpc.subscription.createCheckout.useMutation();
+
   const openAuthModal = (mode: "login" | "register") => {
     setAuthMode(mode);
     setAuthModalOpen(true);
+  };
+
+  const handleSubscribe = async (priceId: string) => {
+    if (!isAuthenticated) {
+      openAuthModal("register");
+      return;
+    }
+
+    try {
+      const { checkoutUrl } = await createCheckout.mutateAsync({ priceId });
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      }
+    } catch (error) {
+      console.error("Erro ao criar checkout:", error);
+      alert("Erro ao processar pagamento. Tente novamente.");
+    }
   };
 
   return (
@@ -362,11 +382,13 @@ export default function Home() {
                     <span>Histórico ilimitado</span>
                   </li>
                 </ul>
-                <Link href="/planner">
-                  <Button className="w-full">
-                    Assinar Pro
-                  </Button>
-                </Link>
+                <Button
+                  className="w-full"
+                  onClick={() => handleSubscribe("price_pro_placeholder")}
+                  disabled={createCheckout.isPending}
+                >
+                  {createCheckout.isPending ? "Processando..." : "Assinar Pro"}
+                </Button>
               </CardContent>
             </Card>
 
@@ -402,11 +424,14 @@ export default function Home() {
                     <span>Personalização avançada</span>
                   </li>
                 </ul>
-                <Link href="/planner">
-                  <Button variant="outline" className="w-full">
-                    Assinar Premium
-                  </Button>
-                </Link>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleSubscribe("price_premium_placeholder")}
+                  disabled={createCheckout.isPending}
+                >
+                  {createCheckout.isPending ? "Processando..." : "Assinar Premium"}
+                </Button>
               </CardContent>
             </Card>
           </div>
