@@ -3,6 +3,7 @@
  */
 
 import { invokeLLM } from "./_core/llm";
+import { normalizeIngredient } from "./ingredients-dictionary";
 
 export interface DetectedIngredient {
   name: string;
@@ -124,14 +125,29 @@ export async function detectIngredientsFromMultipleImages(
     }
   }
 
-  // Remove duplicatas e mantém apenas ingredientes com confiança > 0.5
+  // Remove duplicatas, valida contra dicionário e mantém apenas ingredientes com confiança > 0.5
   const uniqueIngredients = new Map<string, DetectedIngredient>();
   
   for (const ing of allIngredients) {
     if (ing.confidence > 0.5) {
-      const existing = uniqueIngredients.get(ing.name.toLowerCase());
+      // Normaliza o ingrediente usando o dicionário
+      const normalized = normalizeIngredient(ing.name);
+      
+      // Ignora ingredientes que não existem no dicionário (anti-alucinação)
+      if (!normalized) {
+        console.log(`[Anti-alucinação] Ingrediente ignorado: "${ing.name}" (não encontrado no dicionário)`);
+        continue;
+      }
+
+      // Usa o nome canônico do dicionário
+      const key = normalized.canonical.toLowerCase();
+      const existing = uniqueIngredients.get(key);
+
       if (!existing || ing.confidence > existing.confidence) {
-        uniqueIngredients.set(ing.name.toLowerCase(), ing);
+        uniqueIngredients.set(key, {
+          ...ing,
+          name: normalized.canonical, // Força nome canônico
+        });
       }
     }
   }

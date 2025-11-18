@@ -110,3 +110,15 @@
 - [ ] Testar recuperação de senha
 - [ ] Testar validação de email
 
+
+
+
+### 11. Anti-Alucinação na Detecção de Ingredientes por Foto
+
+- [x] Importar normalizeIngredient no image-detection.ts
+- [x] Filtrar ingredientes detectados usando o dicionário
+- [x] Usar nomes canônicos do dicionário
+- [x] Remover duplicatas após normalização
+- [x] Log de ingredientes ignorados (anti-alucinação)
+- [ ] Testar com ingredientes inventados pela IA
+
