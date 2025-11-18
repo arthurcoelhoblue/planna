@@ -5,12 +5,13 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { getLoginUrl } from "./const";
 import "./index.css";
 import { registerServiceWorker } from "./registerSW";
 
 const queryClient = new QueryClient();
 
+// Função removida: não redirecionar automaticamente para login externo da Manus
+// O DashboardLayout já lida com usuários não autenticados mostrando o AuthModal interno
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
@@ -19,7 +20,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  // NÃO redirecionar para login externo
+  // O DashboardLayout mostrará o AuthModal automaticamente
+  console.log("[Auth] Usuário não autenticado. O DashboardLayout mostrará o modal de login.");
 };
 
 queryClient.getQueryCache().subscribe(event => {

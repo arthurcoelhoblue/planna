@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { AuthModal } from "@/components/AuthModal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -47,6 +48,7 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { loading, user } = useAuth();
 
   useEffect(() => {
@@ -74,20 +76,31 @@ export default function DashboardLayout({
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-bold tracking-tight">{APP_TITLE}</h1>
               <p className="text-sm text-muted-foreground">
-                Please sign in to continue
+                Faça login para continuar
               </p>
             </div>
           </div>
           <Button
-            onClick={() => {
-              window.location.href = "/";
-            }}
+            onClick={() => setAuthModalOpen(true)}
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
           >
-            Sign in
+            Fazer Login
+          </Button>
+          <Button
+            onClick={() => window.location.href = "/"}
+            variant="outline"
+            size="lg"
+            className="w-full"
+          >
+            Voltar para Home
           </Button>
         </div>
+        <AuthModal
+          open={authModalOpen}
+          onOpenChange={setAuthModalOpen}
+          defaultMode="login"
+        />
       </div>
     );
   }

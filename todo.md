@@ -396,3 +396,41 @@
 - [ ] Adicionar badge "VIP" ou "Admin" no dashboard (opcional)
 - [x] Testar com email Arthurcsantos@gmail.com
 
+
+
+
+### 23. Aplicar DashboardLayout em Todas as Rotas Logadas
+
+#### Auditoria de Rotas
+- [x] Identificar todas as rotas protegidas existentes
+- [x] Verificar quais rotas já usam DashboardLayout
+- [x] Listar rotas que precisam ser migradas
+
+#### Aplicação do DashboardLayout
+- [x] Aplicar DashboardLayout em /planner
+- [x] Aplicar DashboardLayout em /plan/:id
+- [x] Aplicar DashboardLayout em /history
+- [x] Aplicar DashboardLayout em /profile (se existir)
+- [x] Aplicar DashboardLayout em /payment-success (se existir)
+- [x] Aplicar DashboardLayout em /payment-failed (se existir)
+- [x] Aplicar DashboardLayout em /dashboard
+- [x] Aplicar DashboardLayout em /shared/:token (se for rota protegida)
+
+#### Botão de Logout
+- [x] Garantir que botão de logout aparece no canto superior direito
+- [x] Botão de logout visível em TODAS as rotas logadas
+- [x] Botão de logout dentro do DashboardLayout
+
+#### Remoção de Rotas da Manus
+- [x] Remover qualquer redirecionamento para "/auth/login"
+- [x] Remover links para rotas externas da Manus
+- [x] Garantir que rotas protegidas usam AuthModal interno
+
+#### Testes de QA
+- [x] Teste: Login → navegar para /planner → ver layout e logout
+- [x] Teste: Login → navegar para /history → ver layout e logout
+- [x] Teste: Login → abrir um plano → ver layout e logout
+- [x] Teste: Clicar em logout → apagar sessão → redirecionar para Home
+- [x] Teste: Após logout → tentar acessar /planner → abrir AuthModal
+- [x] Teste: Após logout → tentar acessar /history → abrir AuthModal
+
