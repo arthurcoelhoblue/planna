@@ -477,7 +477,7 @@ export const appRouter = router({
         // Paywall: verificar limite mensal
         const { hasReachedMonthlyLimit } = await import("./paywall");
         const tier = ctx.user.subscriptionTier || "free";
-        const reachedLimit = await hasReachedMonthlyLimit(ctx.user.id, tier);
+        const reachedLimit = await hasReachedMonthlyLimit(ctx.user.id, tier, ctx.user.email);
 
         if (reachedLimit) {
           throw new Error(

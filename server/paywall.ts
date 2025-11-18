@@ -5,6 +5,23 @@
 export type SubscriptionTier = "free" | "pro" | "premium";
 
 /**
+ * Lista de emails VIP/Admin que não têm limites
+ * Estes usuários podem criar planos ilimitados e acessar todas as features
+ */
+const VIP_EMAILS = [
+  "arthurcsantos@gmail.com",
+  // Adicione mais emails VIP aqui se necessário
+];
+
+/**
+ * Verifica se um email é VIP
+ */
+export function isVIPEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return VIP_EMAILS.includes(email.toLowerCase());
+}
+
+/**
  * Limites por tier
  */
 export const TIER_LIMITS = {
@@ -39,8 +56,11 @@ export const TIER_LIMITS = {
  */
 export function canAccess(
   tier: SubscriptionTier,
-  feature: keyof typeof TIER_LIMITS.free
+  feature: keyof typeof TIER_LIMITS.free,
+  userEmail?: string | null
 ): boolean {
+  // Usuários VIP têm acesso a tudo
+  if (isVIPEmail(userEmail)) return true;
   return TIER_LIMITS[tier][feature] as boolean;
 }
 
@@ -56,8 +76,12 @@ export function getMaxPlansPerMonth(tier: SubscriptionTier): number {
  */
 export async function hasReachedMonthlyLimit(
   userId: number,
-  tier: SubscriptionTier
+  tier: SubscriptionTier,
+  userEmail?: string | null
 ): Promise<boolean> {
+  // Usuários VIP não têm limites
+  if (isVIPEmail(userEmail)) return false;
+
   const maxPlans = getMaxPlansPerMonth(tier);
   if (maxPlans === -1) return false; // Ilimitado
 

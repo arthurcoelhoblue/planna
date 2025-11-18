@@ -384,3 +384,15 @@
 - [ ] Instruções de instalação para iOS e Android
 
 
+
+
+
+### 22. Sistema de Usuários VIP/Admin (Sem Limites)
+
+- [x] Adicionar lista de emails VIP no servidor
+- [x] Modificar verificação de limites para ignorar usuários VIP
+- [x] Remover limite de planos mensais para VIPs
+- [x] Remover paywall para VIPs
+- [ ] Adicionar badge "VIP" ou "Admin" no dashboard (opcional)
+- [x] Testar com email Arthurcsantos@gmail.com
+
