@@ -174,3 +174,27 @@
 - [x] Criar card de visualização de estoque no Planner
 - [x] Parser em tempo real no frontend
 
+
+
+
+### 15. Remover Completamente Login da Manus no Frontend
+
+#### Substituir getLoginUrl() por AuthModal
+- [x] Atualizar Planner.tsx para usar AuthModal
+- [x] Atualizar History.tsx para usar AuthModal
+- [x] Ajustar useAuth redirectPath para "/"
+- [x] Remover dependência de getLoginUrl() em páginas protegidas
+- [x] Remover import de getLoginUrl de todos os arquivos
+
+#### Organizar Navegação Base
+- [x] Atualizar menuItems no DashboardLayout
+- [x] Adicionar "Histórico" e "Planejador" no menu
+- [x] Tornar logo clicável apontando para /history
+- [x] Adicionar ícones corretos (ChefHat, LayoutDashboard)
+- [x] Ajustar botão "Sign in" para redirecionar para Home
+
+#### Melhorias de UX
+- [x] Adicionar dica sobre vírgula/ponto decimal no campo de ingredientes
+- [x] Testar fluxo completo de login local
+- [x] Validar navegação entre páginas
+

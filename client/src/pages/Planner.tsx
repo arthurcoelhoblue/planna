@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { APP_TITLE, getLoginUrl } from "@/const";
+import { APP_TITLE } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { ChefHat, Loader2, Camera, AlertCircle, X, ImageIcon } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -15,6 +15,7 @@ import { Link, useLocation } from "wouter";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { ExclusionsModal } from "@/components/ExclusionsModal";
 import { OnboardingModal } from "@/components/OnboardingModal";
+import { AuthModal } from "@/components/AuthModal";
 import { storagePut } from "../../../server/storage";
 interface UploadedImage {
   file: File;
@@ -41,6 +42,8 @@ export default function Planner() {
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [shouldReplaceIngredients, setShouldReplaceIngredients] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
   const { data: preferences } = trpc.preferences.get.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -213,16 +216,34 @@ export default function Planner() {
             <CardDescription>Você precisa estar logado para usar o planejador</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <a href={getLoginUrl()} className="block">
-              <Button className="w-full">Fazer Login</Button>
-            </a>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setAuthMode("login");
+                setAuthModalOpen(true);
+              }}
+            >
+              Fazer Login
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setAuthMode("register");
+                setAuthModalOpen(true);
+              }}
+            >
+              Criar Conta
+            </Button>
             <Link href="/">
-              <Button variant="outline" className="w-full">
+              <Button variant="ghost" className="w-full">
                 Voltar para Home
               </Button>
             </Link>
           </CardContent>
         </Card>
+
+        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} defaultMode={authMode} />
       </div>
     );
   }
@@ -412,6 +433,9 @@ export default function Planner() {
                     {uploadedImages.length > 0
                       ? "Clique em 'Detectar Ingredientes' para preencher automaticamente"
                       : "Digite manualmente ou use fotos para detecção automática"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    💡 Dica: Você pode usar vírgula ou ponto para decimais (ex: 1,5 kg ou 1.5 kg de frango)
                   </p>
 
                   {/* Preview de estoque parseado */}

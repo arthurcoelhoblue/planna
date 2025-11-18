@@ -1,13 +1,17 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { APP_TITLE, getLoginUrl } from "@/const";
+import { APP_TITLE } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { ChefHat, Clock, Loader2, Trash2 } from "lucide-react";
 import { Link } from "wouter";
+import { AuthModal } from "@/components/AuthModal";
+import { useState } from "react";
 
 export default function History() {
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
   const { data: sessions, isLoading } = trpc.mealPlan.getHistory.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -43,16 +47,34 @@ export default function History() {
             <CardDescription>Você precisa estar logado para ver seu histórico</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <a href={getLoginUrl()} className="block">
-              <Button className="w-full">Fazer Login</Button>
-            </a>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setAuthMode("login");
+                setAuthModalOpen(true);
+              }}
+            >
+              Fazer Login
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setAuthMode("register");
+                setAuthModalOpen(true);
+              }}
+            >
+              Criar Conta
+            </Button>
             <Link href="/">
-              <Button variant="outline" className="w-full">
+              <Button variant="ghost" className="w-full">
                 Voltar para Home
               </Button>
             </Link>
           </CardContent>
         </Card>
+
+        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} defaultMode={authMode} />
       </div>
     );
   }
