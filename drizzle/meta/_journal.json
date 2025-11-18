@@ -71,6 +71,20 @@
       "when": 1763395680336,
       "tag": "0009_easy_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1763481556305,
+      "tag": "0010_wooden_boomerang",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1763481669790,
+      "tag": "0011_pretty_gideon",
+      "breakpoints": true
     }
   ]
 }

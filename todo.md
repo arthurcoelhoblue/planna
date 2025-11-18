@@ -76,3 +76,37 @@
 - [ ] Documentar configuração de webhook no README
 
 
+
+
+
+### 10. Autenticação Local (Email/Senha)
+
+#### Backend
+- [x] Adicionar campo passwordHash na tabela users
+- [x] Criar funções hashPassword e verifyPassword (bcrypt)
+- [x] Implementar endpoint registerLocal
+- [x] Implementar endpoint loginLocal
+- [x] Criar sistema de tokens de recuperação de senha
+- [x] Implementar endpoint requestPasswordReset
+- [x] Implementar endpoint resetPassword
+- [x] Adicionar tabela password_reset_tokens
+- [ ] Adicionar validação de email com token (opcional)
+
+#### Frontend
+- [x] Criar modal de Login/Registro (AuthModal.tsx)
+- [x] Criar formulário de cadastro (nome, email, senha)
+- [x] Criar formulário de login (email, senha)
+- [x] Criar fluxo de recuperação de senha
+- [x] Criar página de reset de senha (/reset-password)
+- [x] Integrar com onboarding após registro
+- [x] Atualizar links de login na Home
+- [x] Adicionar AuthModal na Home
+- [x] Remover dependência de getLoginUrl()
+
+#### Testes
+- [ ] Testar registro de novo usuário
+- [ ] Testar login com credenciais corretas
+- [ ] Testar login com credenciais incorretas
+- [ ] Testar recuperação de senha
+- [ ] Testar validação de email
+

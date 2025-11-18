@@ -1,8 +1,10 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { AuthModal } from "@/components/AuthModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
+import { APP_LOGO, APP_TITLE } from "@/const";
 import { ChefHat, Clock, ShoppingCart, Sparkles, Star, TrendingUp, Users } from "lucide-react";
+import { useState } from "react";
 import { Link } from "wouter";
 
 const testimonials = [
@@ -37,6 +39,13 @@ const stats = [
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+
+  const openAuthModal = (mode: "login" | "register") => {
+    setAuthMode(mode);
+    setAuthModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background">
@@ -58,9 +67,9 @@ export default function Home() {
                 </Link>
               </>
             ) : (
-              <a href={getLoginUrl()}>
-                <Button variant="outline">Entrar</Button>
-              </a>
+              <Button variant="outline" onClick={() => openAuthModal("login")}>
+                Entrar
+              </Button>
             )}
           </nav>
         </div>
@@ -433,6 +442,13 @@ export default function Home() {
           © 2025 {APP_TITLE} - Planejador de Marmitas. Planejamento inteligente de marmitas.
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        defaultMode={authMode}
+      />
     </div>
   );
 }

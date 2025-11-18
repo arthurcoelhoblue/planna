@@ -16,6 +16,228 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+
+    // Local authentication (email/password)
+    registerLocal: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+          email: z.string().email("Email inválido"),
+          password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const { getDb, upsertUser } = await import("./db");
+        const { hashPassword } = await import("./_core/passwords");
+        const { users } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const { sdk } = await import("./_core/sdk");
+
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Check if email already exists
+        const existing = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, input.email))
+          .limit(1);
+
+        if (existing.length > 0) {
+          throw new Error("Já existe um usuário com esse e-mail");
+        }
+
+        // Hash password
+        const passwordHash = await hashPassword(input.password);
+
+        // Generate internal openId for local users
+        const openId = `local_${crypto.randomUUID()}`;
+
+        // Insert user
+        await db.insert(users).values({
+          openId,
+          name: input.name,
+          email: input.email,
+          passwordHash,
+          loginMethod: "local",
+        });
+
+        // Create session
+        const token = await sdk.createSessionToken(openId, {
+          name: input.name,
+        });
+
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+        ctx.res.cookie(COOKIE_NAME, token, {
+          ...cookieOptions,
+          maxAge: ONE_YEAR_MS,
+        });
+
+        return { success: true, needsOnboarding: true };
+      }),
+
+    loginLocal: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email("Email inválido"),
+          password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const { getDb } = await import("./db");
+        const { verifyPassword } = await import("./_core/passwords");
+        const { users } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const { sdk } = await import("./_core/sdk");
+
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Find user by email
+        const existing = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, input.email))
+          .limit(1);
+
+        const user = existing[0];
+        if (!user || user.loginMethod !== "local" || !user.passwordHash) {
+          throw new Error("Usuário ou senha inválidos");
+        }
+
+        // Verify password
+        const ok = await verifyPassword(input.password, user.passwordHash);
+        if (!ok) {
+          throw new Error("Usuário ou senha inválidos");
+        }
+
+        // Update last signed in
+        await db
+          .update(users)
+          .set({ lastSignedIn: new Date() })
+          .where(eq(users.id, user.id));
+
+        // Create session
+        const token = await sdk.createSessionToken(user.openId, {
+          name: user.name || "",
+        });
+
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+        ctx.res.cookie(COOKIE_NAME, token, {
+          ...cookieOptions,
+          maxAge: ONE_YEAR_MS,
+        });
+
+        return { success: true, user: { id: user.id, name: user.name, email: user.email } };
+      }),
+
+    // Password reset
+    requestPasswordReset: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email("Email inválido"),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { users, passwordResetTokens } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const { notifyOwner } = await import("./_core/notification");
+
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Find user by email
+        const existing = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, input.email))
+          .limit(1);
+
+        const user = existing[0];
+        if (!user || user.loginMethod !== "local") {
+          // Don't reveal if email exists or not (security)
+          return { success: true };
+        }
+
+        // Generate reset token
+        const token = crypto.randomUUID().replace(/-/g, "");
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        // Save token
+        await db.insert(passwordResetTokens).values({
+          userId: user.id,
+          token,
+          expiresAt,
+        });
+
+        // Send email (via owner notification for now)
+        const resetUrl = `${process.env.VITE_APP_URL || "http://localhost:3000"}/reset-password?token=${token}`;
+        await notifyOwner({
+          title: "Solicitação de Redefinição de Senha - Planna",
+          content: `Usuário: ${user.email}\n\nLink de redefinição: ${resetUrl}\n\nExpira em 1 hora.`,
+        });
+
+        return { success: true };
+      }),
+
+    resetPassword: publicProcedure
+      .input(
+        z.object({
+          token: z.string(),
+          newPassword: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { hashPassword } = await import("./_core/passwords");
+        const { users, passwordResetTokens } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Find token
+        const tokenResult = await db
+          .select()
+          .from(passwordResetTokens)
+          .where(
+            and(
+              eq(passwordResetTokens.token, input.token),
+              eq(passwordResetTokens.used, "no")
+            )
+          )
+          .limit(1);
+
+        const tokenRecord = tokenResult[0];
+        if (!tokenRecord) {
+          throw new Error("Token inválido ou já utilizado");
+        }
+
+        // Check if expired
+        if (new Date() > tokenRecord.expiresAt) {
+          throw new Error("Token expirado");
+        }
+
+        // Hash new password
+        const passwordHash = await hashPassword(input.newPassword);
+
+        // Update user password
+        await db
+          .update(users)
+          .set({ passwordHash })
+          .where(eq(users.id, tokenRecord.userId));
+
+        // Mark token as used
+        await db
+          .update(passwordResetTokens)
+          .set({ used: "yes" })
+          .where(eq(passwordResetTokens.id, tokenRecord.id));
+
+        return { success: true };
+      }),
   }),
 
   // Planna routers
