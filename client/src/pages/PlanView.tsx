@@ -274,6 +274,74 @@ export default function PlanView() {
             </div>
           </div>
 
+          {/* Misturas e Porções - Pedidas vs Geradas */}
+          {(plan.requestedVarieties || plan.requestedServings) && (
+            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-800">
+                  🎯 Resumo do Plano
+                </CardTitle>
+                <CardDescription>
+                  Comparação entre o que foi pedido e o que foi gerado
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Misturas */}
+                  {plan.requestedVarieties && (
+                    <div className="bg-white/60 p-4 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-1">Misturas (Variedades)</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-blue-700">
+                          {dishes.length}
+                        </span>
+                        <span className="text-sm text-muted-foreground">/</span>
+                        <span className="text-lg text-muted-foreground">
+                          {plan.requestedVarieties} pedidas
+                        </span>
+                      </div>
+                      {dishes.length !== plan.requestedVarieties && (
+                        <p className="text-xs text-amber-600 mt-2">
+                          ⚠️ O sistema ajustou o número de misturas
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Porções */}
+                  {plan.requestedServings && (
+                    <div className="bg-white/60 p-4 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-1">Porções Totais</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-blue-700">
+                          {dishes.reduce((sum: number, dish: any) => sum + dish.servings, 0)}
+                        </span>
+                        <span className="text-sm text-muted-foreground">/</span>
+                        <span className="text-lg text-muted-foreground">
+                          {plan.requestedServings} pedidas
+                        </span>
+                      </div>
+                      {dishes.reduce((sum: number, dish: any) => sum + dish.servings, 0) < plan.requestedServings && (
+                        <p className="text-xs text-amber-600 mt-2">
+                          ⚠️ O sistema gerou menos porções que o solicitado
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Mensagem de Ajuste */}
+                {plan.adjustmentReason && (
+                  <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800">
+                      <strong>💡 Ajuste Automático:</strong> {plan.adjustmentReason}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Parâmetros do Plano */}
           <Card>
             <CardHeader>

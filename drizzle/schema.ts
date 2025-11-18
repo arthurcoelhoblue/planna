@@ -86,6 +86,9 @@ export const plans = mysqlTable("plans", {
   maxKcalPerServing: int("maxKcalPerServing"), // Max calories per serving limit
   shareToken: varchar("shareToken", { length: 64 }), // Unique token for sharing
   shareCount: int("shareCount").default(0), // Number of times shared link was accessed
+  requestedVarieties: int("requestedVarieties"), // Number of varieties (misturas) requested by user
+  requestedServings: int("requestedServings"), // Number of servings requested by user
+  adjustmentReason: text("adjustmentReason"), // Explanation when system couldn't fulfill exact request
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

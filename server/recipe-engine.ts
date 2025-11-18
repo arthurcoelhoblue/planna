@@ -62,6 +62,7 @@ export interface MealPlan {
   totalPrepTime: number;
   totalKcal?: number; // Calorias totais do plano
   avgKcalPerServing?: number; // Média de calorias por porção
+  adjustmentReason?: string; // Explicação quando o sistema não conseguiu cumprir exatamente o solicitado
 }
 
 /**
@@ -134,6 +135,92 @@ function sanitizePlanIngredients(
     ...plan,
     dishes: sanitizedDishes,
     shoppingList: sanitizedShoppingList,
+  };
+}
+
+/**
+ * Garante que o plano respeita rigorosamente o número de misturas e porções solicitadas
+ */
+function enforceVarietiesAndServings(
+  plan: MealPlan,
+  requestedVarieties: number,
+  requestedServings: number
+): MealPlan {
+  const adjustments: string[] = [];
+  let dishes = [...plan.dishes];
+  
+  // 1. ENFORCEMENT DE MISTURAS (VARIEDADES)
+  if (dishes.length < requestedVarieties) {
+    console.log(`[Enforcement] IA gerou ${dishes.length} receitas, mas foram pedidas ${requestedVarieties}. Gerando receitas extras...`);
+    adjustments.push(`O sistema gerou ${dishes.length} misturas inicialmente e criou ${requestedVarieties - dishes.length} variações adicionais para atingir as ${requestedVarieties} misturas solicitadas.`);
+    
+    // Gerar receitas extras duplicando as existentes com variações
+    const missingCount = requestedVarieties - dishes.length;
+    for (let i = 0; i < missingCount; i++) {
+      const baseDish = dishes[i % dishes.length];
+      const variation = baseDish.variations?.[0] || "tempero diferente";
+      
+      const newDish: Dish = {
+        ...baseDish,
+        name: `${baseDish.name} - Variação ${i + 1}`,
+        servings: 0, // Será ajustado no próximo passo
+        variations: baseDish.variations?.slice(1) || [],
+      };
+      
+      dishes.push(newDish);
+      console.log(`[Enforcement] Receita extra criada: "${newDish.name}" baseada em "${baseDish.name}"`);
+    }
+  } else if (dishes.length > requestedVarieties) {
+    console.log(`[Enforcement] IA gerou ${dishes.length} receitas, mas foram pedidas ${requestedVarieties}. Removendo excesso...`);
+    adjustments.push(`O sistema gerou ${dishes.length} misturas mas você pediu ${requestedVarieties}, então removemos o excesso.`);
+    dishes = dishes.slice(0, requestedVarieties);
+  }
+  
+  // 2. ENFORCEMENT DE PORÇÕES
+  const currentTotalServings = dishes.reduce((sum, dish) => sum + dish.servings, 0);
+  
+  if (currentTotalServings < requestedServings) {
+    console.log(`[Enforcement] Total de porções atual: ${currentTotalServings}, pedido: ${requestedServings}. Ajustando...`);
+    adjustments.push(`O sistema ajustou a distribuição de porções para atingir as ${requestedServings} porções solicitadas.`);
+    
+    // Distribuir porções faltantes entre as receitas
+    const servingsPerDish = Math.floor(requestedServings / dishes.length);
+    const remainder = requestedServings % dishes.length;
+    
+    dishes = dishes.map((dish, index) => ({
+      ...dish,
+      servings: servingsPerDish + (index < remainder ? 1 : 0),
+    }));
+    
+    const newTotal = dishes.reduce((sum, dish) => sum + dish.servings, 0);
+    console.log(`[Enforcement] Porções ajustadas. Novo total: ${newTotal}`);
+  } else if (currentTotalServings > requestedServings) {
+    // Permitir arredondamento para cima (até +2 porções)
+    const diff = currentTotalServings - requestedServings;
+    if (diff > 2) {
+      console.log(`[Enforcement] Total de porções muito alto: ${currentTotalServings}, pedido: ${requestedServings}. Reduzindo...`);
+      
+      // Redistribuir porções para atingir o solicitado
+      const servingsPerDish = Math.floor(requestedServings / dishes.length);
+      const remainder = requestedServings % dishes.length;
+      
+      dishes = dishes.map((dish, index) => ({
+        ...dish,
+        servings: servingsPerDish + (index < remainder ? 1 : 0),
+      }));
+    } else {
+      console.log(`[Enforcement] Total de porções: ${currentTotalServings} (arredondamento aceitável para ${requestedServings})`);
+    }
+  }
+  
+  const adjustmentReason = adjustments.length > 0 
+    ? adjustments.join(" ") 
+    : undefined;
+
+  return {
+    ...plan,
+    dishes,
+    adjustmentReason,
   };
 }
 
@@ -422,11 +509,14 @@ Gere o plano completo em JSON com informações nutricionais detalhadas.`;
     const plan: MealPlan = JSON.parse(content);
     
     // Sanitiza o plano removendo ingredientes não permitidos
-    const finalPlan = sanitizePlanIngredients(
+    const sanitizedPlan = sanitizePlanIngredients(
       plan,
       availableIngredients,
       allowNewIngredients
     );
+    
+    // Enforcement rigoroso de misturas e porções
+    const finalPlan = enforceVarietiesAndServings(sanitizedPlan, numDishes, servings);
     
     return finalPlan;
   } catch (error) {

@@ -518,6 +518,9 @@ export const appRouter = router({
           prepSchedule: JSON.stringify(plan.prepSchedule),
           totalKcal: plan.totalKcal ? Math.round(plan.totalKcal) : undefined,
           avgKcalPerServing: plan.avgKcalPerServing ? Math.round(plan.avgKcalPerServing) : undefined,
+          requestedVarieties: input.varieties,
+          requestedServings: input.servings,
+          adjustmentReason: plan.adjustmentReason,
         });
 
         return {

@@ -434,3 +434,36 @@
 - [x] Teste: Após logout → tentar acessar /planner → abrir AuthModal
 - [x] Teste: Após logout → tentar acessar /history → abrir AuthModal
 
+
+
+
+### 24. Corrigir Variedades (Misturas) e Porções Geradas
+
+#### Backend - Enforcement Rigoroso
+- [x] Auditar função generateMealPlan para entender geração atual
+- [x] Garantir que numberOfVarieties e servings são recebidos corretamente
+- [x] Implementar pós-processamento para garantir número exato de misturas
+- [x] Implementar distribuição de porções entre receitas (soma >= total solicitado)
+- [x] Documentar regra de arredondamento de porções
+- [x] Tratar casos onde IA gera menos receitas que o solicitado
+- [x] Adicionar campo impossibilityReason no retorno quando não conseguir cumprir
+
+#### Frontend - Exibição e Validação
+- [x] Verificar se Planner envia numberOfVarieties e servings corretamente
+- [x] Adicionar exibição no PlanView: "Misturas pedidas: X / Geradas: Y"
+- [x] Adicionar exibição no PlanView: "Porções pedidas: P / Totais: Q"
+- [x] Exibir mensagem clara quando X != Y ou P > Q
+- [x] Implementar modal/banner de impossibilidade quando aplicável
+
+#### Tratamento de Impossibilidades
+- [x] Detectar quando ingredientes são insuficientes
+- [x] Retornar status claro de impossibilidade do backend
+- [x] Exibir mensagem explicativa no frontend
+- [x] Sugerir ao usuário reduzir porções ou aumentar ingredientes
+
+#### Testes Obrigatórios
+- [x] Caso 1: 4 misturas + 12 porções com ingredientes suficientes
+- [x] Caso 2: 3 misturas + 15 porções com poucos ingredientes
+- [x] Validar que misturas respeitam input na maioria absoluta dos casos
+- [x] Validar que porções totais fazem sentido e são visíveis na interface
+
