@@ -163,9 +163,14 @@
 - [x] Corrigir split para não quebrar números decimais com vírgula
 - [x] Validar compatibilidade reversa (entrada sem quantidade)
 
-#### Passo 2 - Enforcement de Estoque (Futuro)
-- [ ] Evoluir availableIngredients para aceitar objetos com quantidade
-- [ ] Instruir prompt do motor sobre limites de estoque
-- [ ] Validar que receitas não excedem estoque disponível
-- [ ] Adicionar UI para entrada de quantidades (opcional)
+#### Passo 2 - Enforcement de Estoque (Implementado)
+- [x] Evoluir availableIngredients para aceitar objetos com quantidade
+- [x] Criar interface IngredientWithStock
+- [x] Normalizar ingredientes no início de generateMealPlan
+- [x] Instruir prompt do motor sobre limites de estoque
+- [x] Adicionar stockRule no systemPrompt
+- [x] Adicionar tooltip no campo de ingredientes
+- [x] Atualizar placeholder com exemplos de quantidade
+- [x] Criar card de visualização de estoque no Planner
+- [x] Parser em tempo real no frontend
 

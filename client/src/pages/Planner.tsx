@@ -392,17 +392,17 @@ export default function Planner() {
                       O que você tem em casa? <span className="text-destructive">*</span>
                     </Label>
                     <InfoTooltip
-                      content="Liste todos os ingredientes disponíveis na sua geladeira, despensa ou armário. Pode ser texto livre!"
+                      content="Liste todos os ingredientes disponíveis. Pode informar quantidades para controle de estoque!"
                       examples={[
-                        "Geladeira: frango, ovos, leite, queijo",
-                        "Despensa: arroz, feijão, macarrão, óleo",
-                        "Hortifruti: tomate, cebola, alho, cenoura",
+                        "Com quantidade: 2kg frango, 500g arroz, 10 ovos",
+                        "Sem quantidade: frango, arroz, feijão, batata",
+                        "Misto: 1kg frango, arroz, 500g queijo, tomate",
                       ]}
                     />
                   </div>
                   <Textarea
                     id="ingredients"
-                    placeholder="Ex: frango, arroz, feijão, cenoura, brócolis, batata, ovos, tomate, cebola, alho..."
+                    placeholder="Ex: 2kg frango, 500g arroz, 10 ovos, 1kg batata, tomate, cebola..."
                     value={ingredients}
                     onChange={(e) => setIngredients(e.target.value)}
                     rows={4}
@@ -413,6 +413,59 @@ export default function Planner() {
                       ? "Clique em 'Detectar Ingredientes' para preencher automaticamente"
                       : "Digite manualmente ou use fotos para detecção automática"}
                   </p>
+
+                  {/* Preview de estoque parseado */}
+                  {ingredients.trim() && (() => {
+                    const parsed = ingredients
+                      .split(/[,;\n]/)
+                      .map(item => item.trim())
+                      .filter(item => item.length > 0)
+                      .map(item => {
+                        // Tenta extrair quantidade: "2kg frango" -> { qty: 2, unit: "kg", name: "frango" }
+                        const qtyMatch = item.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Zçãõéêíóú]+)?\s+(.*)$/);
+                        if (qtyMatch) {
+                          return {
+                            original: item,
+                            quantity: parseFloat(qtyMatch[1].replace(",", ".")),
+                            unit: qtyMatch[2] || "",
+                            name: qtyMatch[3],
+                          };
+                        }
+                        return { original: item, name: item };
+                      });
+
+                    const withQty = parsed.filter(p => p.quantity !== undefined);
+                    const withoutQty = parsed.filter(p => p.quantity === undefined);
+
+                    if (withQty.length === 0) return null;
+
+                    return (
+                      <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                        <p className="text-sm font-medium text-orange-900 dark:text-orange-100 mb-2">
+                          📦 Estoque detectado ({withQty.length} com quantidade):
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {withQty.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-white dark:bg-gray-800 px-2 py-1 rounded text-xs border border-orange-300 dark:border-orange-700"
+                            >
+                              <span className="font-semibold text-orange-600 dark:text-orange-400">
+                                {item.quantity}{item.unit}
+                              </span>
+                              {" "}
+                              <span className="text-gray-700 dark:text-gray-300">{item.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {withoutQty.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            + {withoutQty.length} sem quantidade especificada
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Número de marmitas (apenas para plano semanal) */}

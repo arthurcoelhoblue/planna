@@ -5,6 +5,18 @@
 
 import { invokeLLM } from "./_core/llm";
 
+/**
+ * Ingrediente com informação de estoque (usado na entrada do usuário)
+ */
+export interface IngredientWithStock {
+  name: string;
+  quantity?: number;
+  unit?: string;
+}
+
+/**
+ * Ingrediente em uma receita
+ */
 export interface Ingredient {
   name: string;
   quantity: number;
@@ -129,7 +141,7 @@ function sanitizePlanIngredients(
  * Gera um plano de marmitas usando IA
  */
 export async function generateMealPlan(params: {
-  availableIngredients: string[];
+  availableIngredients: Array<string | IngredientWithStock>;
   servings: number;
   exclusions?: string[];
   objective?: "normal" | "aproveitamento";
@@ -143,7 +155,7 @@ export async function generateMealPlan(params: {
   dietType?: string;
 }): Promise<MealPlan> {
   const {
-    availableIngredients,
+    availableIngredients: rawIngredients,
     servings,
     exclusions = [],
     objective = "normal",
@@ -156,6 +168,20 @@ export async function generateMealPlan(params: {
     calorieLimit,
     dietType,
   } = params;
+
+  // Normaliza ingredientes: separa nomes e quantidades
+  const ingredientsWithStock: IngredientWithStock[] = rawIngredients.map(item => {
+    if (typeof item === "string") {
+      return { name: item };
+    }
+    return item;
+  });
+
+  // Lista de nomes para compatibilidade com código existente
+  const availableIngredients = ingredientsWithStock.map(i => i.name);
+
+  // Ingredientes com quantidade definida
+  const stockLimits = ingredientsWithStock.filter(i => i.quantity !== undefined);
 
   // Calcula número de pratos base
   const numDishes = varieties || (servings <= 8 ? 3 : servings <= 12 ? 4 : 5);
@@ -192,6 +218,11 @@ export async function generateMealPlan(params: {
     ? `DIETA ESPECIAL: O usuário segue a dieta "${dietType}". RESPEITE RIGOROSAMENTE as restrições alimentares desta dieta. Use APENAS ingredientes permitidos.`
     : "";
 
+  // Regra de estoque (se houver quantidades definidas)
+  const stockRule = stockLimits.length > 0
+    ? `LIMITES DE ESTOQUE: O usuário informou as seguintes quantidades disponíveis:\n${stockLimits.map(s => `- ${s.name}: ${s.quantity}${s.unit || ""}`).join("\n")}\n\nIMPORTANTE: NÃO planeje receitas que exijam MAIS do que essas quantidades. Se um ingrediente tem limite, respeite-o RIGOROSAMENTE. Ajuste as porções e receitas para caber no estoque disponível.`
+    : "";
+
   // Monta o prompt para a IA
   const systemPrompt = `Você é um planejador de marmitas minimalista e prático.
 
@@ -213,10 +244,11 @@ REGRAS IMPORTANTES:
 8. ${skillLevelRule}
 ${calorieRule ? `9. ${calorieRule}` : ""}
 ${dietRule ? `10. ${dietRule}` : ""}
-11. CÁLCULO DE TEMPO: O totalPrepTime deve considerar tarefas paralelas. Se 2 tarefas de 30min cada são paralelas, contam como 30min (não 60min). Some apenas o tempo real necessário.
-12. Passos curtos e acionáveis no título, mas com detalhamento completo
-13. Tempo total de preparo deve ser otimizado (batch cooking)
-14. IMPORTANTE: Para cada passo do prepSchedule, inclua:
+${stockRule ? `11. ${stockRule}` : ""}
+${stockRule ? "12" : "11"}. CÁLCULO DE TEMPO: O totalPrepTime deve considerar tarefas paralelas. Se 2 tarefas de 30min cada são paralelas, contam como 30min (não 60min). Some apenas o tempo real necessário.
+${stockRule ? "13" : "12"}. Passos curtos e acionáveis no título, mas com detalhamento completo
+${stockRule ? "14" : "13"}. Tempo total de preparo deve ser otimizado (batch cooking)
+${stockRule ? "15" : "14"}. IMPORTANTE: Para cada passo do prepSchedule, inclua:
     - action: Título resumido (ex: "Cozinhar arroz")
     - details: Array com passos MUITO DETALHADOS para iniciantes (ex: ["Lave 2 xícaras de arroz em água corrente até a água sair limpa", "Coloque 4 xícaras de água em uma panela média", "Adicione 1 colher de sopa de óleo e 1 colher de chá de sal", "Ligue o fogo alto e espere ferver", "Quando ferver, adicione o arroz lavado", "Mexa uma vez e abaixe o fogo para médio-baixo", "Tampe a panela e deixe cozinhar por 15-18 minutos", "Não mexa durante o cozimento", "Desligue o fogo quando a água secar completamente", "Deixe descansar tampado por 5 minutos antes de servir"])
     - tips: Dica prática (ex: "Se o arroz grudar no fundo, adicione um fio de óleo e mexa delicadamente")
