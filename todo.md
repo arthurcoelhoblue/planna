@@ -122,3 +122,17 @@
 - [x] Log de ingredientes ignorados (anti-alucinação)
 - [ ] Testar com ingredientes inventados pela IA
 
+
+
+
+### 12. Pós-Processamento Rigoroso de Ingredientes
+
+- [x] Criar função normalizeName para comparação case-insensitive
+- [x] Criar função sanitizePlanIngredients
+- [x] Filtrar ingredientes de cada receita
+- [x] Remover receitas que ficaram sem ingredientes
+- [x] Filtrar lista de compras
+- [x] Integrar no generateMealPlan antes do return
+- [x] Log de ingredientes e receitas removidas
+- [ ] Testar com allowNewIngredients = false
+

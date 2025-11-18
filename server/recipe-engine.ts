@@ -52,6 +52,79 @@ export interface MealPlan {
 }
 
 /**
+ * Normaliza nome de ingrediente para comparação case-insensitive e sem acentos
+ */
+function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+/**
+ * Sanitiza o plano gerado pela IA, removendo ingredientes não permitidos
+ * quando allowNewIngredients = false
+ */
+function sanitizePlanIngredients(
+  plan: MealPlan,
+  availableIngredients: string[],
+  allowNewIngredients: boolean
+): MealPlan {
+  // Se permite novos ingredientes, retorna o plano sem modificações
+  if (allowNewIngredients) return plan;
+
+  // Cria set de ingredientes permitidos (normalizados)
+  const allowed = new Set(availableIngredients.map(normalizeName));
+
+  // Filtra ingredientes de cada receita
+  const sanitizedDishes = plan.dishes
+    .map((dish) => {
+      const filteredIngredients = dish.ingredients.filter((ing) => {
+        const normalized = normalizeName(ing.name);
+        const isAllowed = allowed.has(normalized);
+        
+        if (!isAllowed) {
+          console.log(`[Sanitização] Ingrediente removido: "${ing.name}" da receita "${dish.name}"`);
+        }
+        
+        return isAllowed;
+      });
+
+      return {
+        ...dish,
+        ingredients: filteredIngredients,
+      };
+    })
+    // Descarta receitas que ficaram sem ingredientes
+    .filter((dish) => {
+      if (dish.ingredients.length === 0) {
+        console.log(`[Sanitização] Receita removida: "${dish.name}" (sem ingredientes válidos)`);
+        return false;
+      }
+      return true;
+    });
+
+  // Filtra lista de compras
+  const sanitizedShoppingList = plan.shoppingList.filter((item) => {
+    const normalized = normalizeName(item.item);
+    const isAllowed = allowed.has(normalized);
+    
+    if (!isAllowed) {
+      console.log(`[Sanitização] Item removido da lista de compras: "${item.item}"`);
+    }
+    
+    return isAllowed;
+  });
+
+  return {
+    ...plan,
+    dishes: sanitizedDishes,
+    shoppingList: sanitizedShoppingList,
+  };
+}
+
+/**
  * Gera um plano de marmitas usando IA
  */
 export async function generateMealPlan(params: {
@@ -306,7 +379,15 @@ Gere o plano completo em JSON com informações nutricionais detalhadas.`;
 
     const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
     const plan: MealPlan = JSON.parse(content);
-    return plan;
+    
+    // Sanitiza o plano removendo ingredientes não permitidos
+    const finalPlan = sanitizePlanIngredients(
+      plan,
+      availableIngredients,
+      allowNewIngredients
+    );
+    
+    return finalPlan;
   } catch (error) {
     console.error("Erro ao gerar plano:", error);
     // Fallback: retorna plano básico seguro
