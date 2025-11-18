@@ -9,16 +9,20 @@ import Planner from "./pages/Planner";
 import PlanView from "./pages/PlanView";
 import History from "./pages/History";
 import ResetPassword from "./pages/ResetPassword";
+import Dashboard from "./pages/Dashboard";
+import SharedPlan from "./pages/SharedPlan";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/planner" component={Planner} />
       <Route path="/plan/:planId" component={PlanView} />
       <Route path="/history" component={History} />
       <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/shared/:token" component={SharedPlan} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

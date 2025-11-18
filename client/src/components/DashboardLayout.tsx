@@ -21,13 +21,14 @@ import {
 } from "@/components/ui/sidebar";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, ChefHat } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, ChefHat, BarChart3 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
+  { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
   { icon: LayoutDashboard, label: "Histórico", path: "/history" },
   { icon: ChefHat, label: "Planejador", path: "/planner" },
 ];

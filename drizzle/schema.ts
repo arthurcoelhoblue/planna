@@ -84,6 +84,8 @@ export const plans = mysqlTable("plans", {
   estimatedTime: int("estimatedTime"), // Estimated time in hours
   allowNewIngredients: boolean("allowNewIngredients").default(true), // Whether to allow new ingredients
   maxKcalPerServing: int("maxKcalPerServing"), // Max calories per serving limit
+  shareToken: varchar("shareToken", { length: 64 }), // Unique token for sharing
+  shareCount: int("shareCount").default(0), // Number of times shared link was accessed
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

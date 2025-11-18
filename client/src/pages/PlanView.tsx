@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthModal } from "@/components/AuthModal";
+import ShareModal from "@/components/ShareModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import {
   Download,
   Lightbulb,
   Loader2,
+  Share2,
   ShoppingCart,
   ThumbsDown,
   ThumbsUp,
@@ -28,6 +30,7 @@ export default function PlanView() {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const { data: plan, isLoading } = trpc.mealPlan.getById.useQuery(
     { planId: parseInt(planId || "0") },
@@ -249,7 +252,7 @@ export default function PlanView() {
                 className="gap-2"
                 onClick={() => {
                   // Exportar apenas lista de compras
-                  const shoppingText = `*🛒 Lista de Compras - Planna*\n\n${shoppingList.map((cat: any) => 
+                  const shoppingText = `*🛍️ Lista de Compras - Planna*\n\n${shoppingList.map((cat: any) => 
                     `*${cat.category}*\n${cat.items.map((item: any) => `• ${item.quantity} ${item.unit} de ${item.item}`).join('\n')}`
                   ).join('\n\n')}`;
                   const encodedText = encodeURIComponent(shoppingText);
@@ -258,6 +261,15 @@ export default function PlanView() {
               >
                 <ShoppingCart className="w-5 h-5" />
                 Lista de Compras (WhatsApp)
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2"
+                onClick={() => setShareModalOpen(true)}
+              >
+                <Share2 className="w-5 h-5" />
+                Compartilhar
               </Button>
             </div>
           </div>
@@ -590,6 +602,11 @@ export default function PlanView() {
           open={authModalOpen}
           onOpenChange={setAuthModalOpen}
           defaultMode={authMode}
+        />
+        <ShareModal
+          open={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          planId={parseInt(planId || "0")}
         />
       </div>
     </DashboardLayout>

@@ -758,6 +758,71 @@ export const appRouter = router({
       return { portalUrl: session.url };
     }),
   }),
+
+  // Dashboard and user stats
+  dashboard: router({
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserStats } = await import("./dashboard-stats");
+      return getUserStats(ctx.user.id);
+    }),
+
+    subscription: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserSubscription } = await import("./dashboard-stats");
+      return getUserSubscription(ctx.user.id);
+    }),
+
+    updatePreferences: protectedProcedure
+      .input(
+        z.object({
+          dietType: z.string().optional(),
+          exclusions: z.array(z.string()).optional(),
+          favorites: z.array(z.string()).optional(),
+          skillLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+          maxKcalPerServing: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const { updateUserPreference } = await import("./db");
+        await updateUserPreference(ctx.user.id, {
+          dietType: input.dietType,
+          exclusions: input.exclusions ? JSON.stringify(input.exclusions) : undefined,
+          favorites: input.favorites ? JSON.stringify(input.favorites) : undefined,
+          skillLevel: input.skillLevel,
+          maxKcalPerServing: input.maxKcalPerServing,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // Plan sharing
+  share: router({
+    generateLink: protectedProcedure
+      .input(z.object({ planId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const { generateShareLink } = await import("./share-service");
+        const token = await generateShareLink(input.planId, ctx.user.id);
+        const origin = ctx.req.headers.origin || "";
+        return {
+          token,
+          url: `${origin}/shared/${token}`,
+        };
+      }),
+
+    getSharedPlan: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const { getSharedPlan } = await import("./share-service");
+        return getSharedPlan(input.token);
+      }),
+
+    revokeLink: protectedProcedure
+      .input(z.object({ planId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const { revokeShareLink } = await import("./share-service");
+        await revokeShareLink(input.planId, ctx.user.id);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

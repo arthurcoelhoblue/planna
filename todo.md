@@ -303,3 +303,84 @@
 - [ ] Adicionar botão "Sair" no top bar (canto superior direito)
 - [ ] Sempre visível em todas as páginas logadas
 
+
+
+
+
+### 19. Dashboard do Usuário com Estatísticas e Gerenciamento
+
+#### Estatísticas
+- [x] Criar rota /dashboard
+- [x] Criar componente Dashboard.tsx
+- [x] Implementar endpoint stats.overview (planos criados, ingredientes usados, receitas favoritas)
+- [x] Card: Total de planos criados (este mês vs total)
+- [x] Card: Ingredientes mais usados (top 5)
+- [x] Card: Receitas mais geradas
+- [x] Card: Tempo total economizado
+- [ ] Gráfico de planos por mês (últimos 6 meses)
+
+#### Gerenciamento de Assinatura
+- [x] Seção "Minha Assinatura" no dashboard
+- [x] Exibir plano atual (Free/Pro/Premium)
+- [x] Exibir data de renovação
+- [x] Botão "Gerenciar Assinatura" (Stripe Customer Portal)
+- [x] Botão "Fazer Upgrade" para usuários free
+- [x] Badge de status (Ativo/Cancelado/Expirado)
+
+#### Preferências Alimentares
+- [x] Seção "Minhas Preferências" no dashboard
+- [x] Formulário de edição de preferências
+- [x] Campo: Tipo de dieta preferencial
+- [ ] Campo: Ingredientes favoritos
+- [ ] Campo: Ingredientes a evitar
+- [x] Campo: Nível de experiência padrão
+- [ ] Campo: Tempo disponível padrão
+- [x] Botão "Salvar Preferências"
+- [ ] Integrar preferências no Planner (preencher automaticamente)
+
+
+### 20. Sistema de Compartilhamento de Planos
+
+#### Backend
+- [x] Adicionar campo shareToken na tabela meal_plans
+- [x] Criar endpoint generateShareLink (gera token único)
+- [x] Criar endpoint getSharedPlan (público, sem auth)
+- [ ] Implementar lógica de expiração de links (opcional)
+- [x] Adicionar campo shareCount (quantas vezes foi acessado)
+
+#### Frontend
+- [x] Adicionar botão "Compartilhar" no PlanView
+- [x] Criar modal ShareModal.tsx
+- [x] Gerar link público ao clicar
+- [x] Botão "Copiar Link"
+- [x] Botões de compartilhamento rápido (WhatsApp, Facebook, Twitter)
+- [x] Criar página pública /shared/:token
+- [x] Página pública mostra plano completo (sem edição)
+- [x] CTA "Criar meu próprio plano" na página pública
+
+
+### 21. Progressive Web App (PWA) e Modo Offline
+
+#### Configuração PWA
+- [ ] Criar manifest.json com ícones e configurações
+- [ ] Adicionar service worker para cache
+- [ ] Configurar estratégias de cache (Network First, Cache First)
+- [ ] Adicionar ícones PWA (192x192, 512x512)
+- [ ] Configurar splash screen
+- [ ] Adicionar meta tags para iOS (apple-touch-icon)
+
+#### Funcionalidades Offline
+- [ ] Cache de planos visualizados recentemente
+- [ ] Cache de ingredientes do dicionário
+- [ ] Exibir badge "Offline" quando sem conexão
+- [ ] Sincronização automática ao voltar online
+- [ ] Permitir visualização de planos salvos offline
+- [ ] Desabilitar criação de novos planos offline (requer IA)
+
+#### Instalação
+- [ ] Adicionar prompt de instalação no primeiro acesso
+- [ ] Botão "Instalar App" no menu
+- [ ] Detectar se já está instalado (não mostrar prompt)
+- [ ] Instruções de instalação para iOS e Android
+
+
