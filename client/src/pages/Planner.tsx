@@ -18,6 +18,9 @@ import { ExclusionsModal } from "@/components/ExclusionsModal";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { AuthModal } from "@/components/AuthModal";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { StockWarningModal } from "@/components/StockWarningModal";
+import { validateStock } from "@/utils/stockValidation";
+import { parseIngredients } from "../../../server/ingredients-dictionary";
 import { storagePut } from "../../../server/storage";
 interface UploadedImage {
   file: File;
@@ -48,6 +51,14 @@ export default function Planner() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState("");
+  const [stockWarningOpen, setStockWarningOpen] = useState(false);
+  const [insufficientIngredients, setInsufficientIngredients] = useState<Array<{
+    name: string;
+    available: number;
+    needed: number;
+    unit: string;
+  }>>([]);
+  const [pendingGeneration, setPendingGeneration] = useState<any>(null);
   const [skillLevel, setSkillLevel] = useState<"beginner" | "intermediate" | "advanced">("intermediate");
   const [availableTime, setAvailableTime] = useState<number | null>(null);
   const [dietType, setDietType] = useState<string>("");
@@ -198,23 +209,66 @@ export default function Planner() {
     e.preventDefault();
     if (!ingredients.trim()) return;
 
+    const generationParams = {
+      ingredients: ingredients.trim(),
+      servings: planMode === "single" ? 1 : servings[0],
+      exclusions,
+      objective,
+      varieties: planMode === "single" ? 1 : varieties[0],
+      allowNewIngredients,
+      sophistication,
+      skillLevel,
+      availableTime: availableTime || undefined,
+      dietType: dietType || undefined,
+      calorieLimit: calorieLimit || undefined,
+    };
+
+    // Valida estoque se houver quantidades informadas
+    const parsed = parseIngredients(ingredients.trim());
+    const withQuantities = parsed.filter(p => p.quantity && p.inputUnit);
+    
+    if (withQuantities.length > 0) {
+      const insufficient = validateStock(
+        withQuantities.map(p => ({
+          name: p.canonical || p.original,
+          quantity: p.quantity,
+          unit: p.inputUnit,
+        })),
+        generationParams.servings
+      );
+
+      if (insufficient.length > 0) {
+        // Mostra modal de aviso
+        setInsufficientIngredients(insufficient);
+        setPendingGeneration(generationParams);
+        setStockWarningOpen(true);
+        return;
+      }
+    }
+
+    // Se passou na validação ou não tem quantidades, gera direto
     try {
-      generatePlan.mutate({
-        ingredients: ingredients.trim(),
-        servings: planMode === "single" ? 1 : servings[0],
-        exclusions,
-        objective,
-        varieties: planMode === "single" ? 1 : varieties[0],
-        allowNewIngredients,
-        sophistication,
-        skillLevel,
-        availableTime: availableTime || undefined,
-        dietType: dietType || undefined,
-        calorieLimit: calorieLimit || undefined,
-      });
+      generatePlan.mutate(generationParams);
     } catch (error) {
       console.error("Erro ao gerar plano:", error);
     }
+  };
+
+  const handleContinueWithWarning = () => {
+    setStockWarningOpen(false);
+    if (pendingGeneration) {
+      try {
+        generatePlan.mutate(pendingGeneration);
+      } catch (error) {
+        console.error("Erro ao gerar plano:", error);
+      }
+    }
+  };
+
+  const handleAdjustStock = () => {
+    setStockWarningOpen(false);
+    setPendingGeneration(null);
+    // Usuário volta para o formulário para ajustar
   };
 
   // Extrai ingredientes do texto para o modal de exclusões
@@ -897,6 +951,15 @@ export default function Planner() {
           open={upgradeModalOpen}
           onOpenChange={setUpgradeModalOpen}
           reason={upgradeReason}
+        />
+
+        {/* Modal de Aviso de Estoque */}
+        <StockWarningModal
+          open={stockWarningOpen}
+          onClose={() => setStockWarningOpen(false)}
+          insufficientIngredients={insufficientIngredients}
+          onContinue={handleContinueWithWarning}
+          onAdjust={handleAdjustStock}
         />
       </div>
     </DashboardLayout>
