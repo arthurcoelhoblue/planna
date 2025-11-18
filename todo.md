@@ -136,3 +136,16 @@
 - [x] Log de ingredientes e receitas removidas
 - [ ] Testar com allowNewIngredients = false
 
+
+
+
+### 13. Enforcement de Sofisticação (Simples vs Gourmet)
+
+- [x] Reforçar regras de sofisticação no systemPrompt
+- [x] Adicionar campo complexity no schema de Dish
+- [x] Definir critérios claros para "simples" vs "gourmet"
+- [x] Adicionar REGRAS FIXAS no topo do prompt
+- [x] Especificar limites (>45min, >6 passos = gourmet)
+- [ ] (Futuro) Adicionar validação pós-processamento de complexity
+- [ ] Testar com sophistication = "simples" e "gourmet"
+

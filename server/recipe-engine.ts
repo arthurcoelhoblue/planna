@@ -23,6 +23,7 @@ export interface Dish {
   variations?: string[]; // Sugestões de variação
   totalKcal?: number; // Calorias totais da receita
   kcalPerServing?: number; // Calorias por porção
+  complexity: "simples" | "gourmet"; // Nível de sofisticação da receita
 }
 
 export interface ShoppingItem {
@@ -194,6 +195,13 @@ export async function generateMealPlan(params: {
   // Monta o prompt para a IA
   const systemPrompt = `Você é um planejador de marmitas minimalista e prático.
 
+REGRAS FIXAS (NÃO NEGOCIÁVEIS):
+- NUNCA contradiga as regras de ingredientes e exclusões.
+- NUNCA use ingredientes que não estão na lista disponível quando isso for proibido.
+- Siga ESTRITAMENTE o nível de sofisticação:
+  * Se SIMPLES: PROÍBA preparos longos (>45min), técnicas avançadas (sous-vide, flambar, reduzir molhos), ingredientes raros, e muitos passos (>6 passos por receita).
+  * Se GOURMET: ACEITE preparos mais longos, técnicas elaboradas, ingredientes premium, apresentações refinadas e múltiplos componentes.
+
 REGRAS IMPORTANTES:
 1. Crie ${numDishes} pratos base diferentes para ${servings} marmitas
 2. ${ingredientsRule}
@@ -321,8 +329,9 @@ Gere o plano completo em JSON com informações nutricionais detalhadas.`;
                     },
                     totalKcal: { type: "number" },
                     kcalPerServing: { type: "number" },
+                    complexity: { type: "string", enum: ["simples", "gourmet"] },
                   },
-                  required: ["name", "category", "ingredients", "steps", "servings", "prepTime"],
+                  required: ["name", "category", "ingredients", "steps", "servings", "prepTime", "complexity"],
                   additionalProperties: false,
                 },
               },
@@ -419,6 +428,7 @@ function getFallbackPlan(servings: number): MealPlan {
         servings: Math.ceil(servings / 3),
         prepTime: 40,
         variations: ["Adicione limão ao frango", "Use tempero de ervas"],
+        complexity: "simples",
       },
       {
         name: "Carne Moída com Batata",
@@ -438,6 +448,7 @@ function getFallbackPlan(servings: number): MealPlan {
         servings: Math.ceil(servings / 3),
         prepTime: 35,
         variations: ["Adicione pimentão", "Use batata-doce"],
+        complexity: "simples",
       },
       {
         name: "Ovo Mexido com Legumes",
@@ -456,6 +467,7 @@ function getFallbackPlan(servings: number): MealPlan {
         servings: Math.ceil(servings / 3),
         prepTime: 15,
         variations: ["Adicione queijo", "Use espinafre"],
+        complexity: "simples",
       },
     ],
     shoppingList: [
