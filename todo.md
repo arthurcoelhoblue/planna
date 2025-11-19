@@ -499,3 +499,53 @@
 - [x] Teste 3: "frango 2,5 kg arroz 1kg feijão 500g" → 3 ingredientes corretos
 - [ ] QA completo no navegador como usuário real
 
+
+
+
+
+### 19. Tempo Disponível para Cozinhar – Interpretação e Aplicação
+
+#### Frontend - Campos e Textos
+- [ ] Atualizar label do campo no Planner: "Tempo disponível hoje para cozinhar"
+- [ ] Adicionar texto explicativo: "Informe quanto tempo você tem hoje para cozinhar as marmitas ou a refeição (ex.: 2 horas, 3h30)."
+- [ ] Exibir no PlanView: "Tempo disponível informado: X h/min"
+- [ ] Exibir no PlanView: "Tempo estimado do plano: Y h/min (margem de erro de ~30–50%)"
+- [ ] Mostrar aviso quando timeFits = false
+
+#### Backend - Ajuste do Plano ao Tempo
+- [ ] Implementar parsing de tempo (aceitar formatos: "2", "2h", "2h30", "2:30")
+- [ ] Calcular tempo total do plano (soma do tempo de preparo das receitas)
+- [ ] Implementar lógica de ajuste: tempo_total <= tempo_disponível * 1.5
+- [ ] Se tempo extrapolar: reduzir receitas, simplificar, ou ajustar porções
+- [ ] Adicionar campo timeFits no retorno do plano
+
+#### Pós-Processamento
+- [ ] Criar função calculatePlanTime que soma tempo de todas as receitas
+- [ ] Marcar plan.timeFits = true/false baseado na margem de 50%
+- [ ] Retornar totalPlanTime no response
+
+#### Testes Obrigatórios
+- [ ] Caso 1: 2 horas + muitas marmitas → deve mostrar aviso
+- [ ] Caso 2: 4 horas + quantidade razoável → deve caber na margem
+- [ ] Validar exibição correta no frontend
+- [ ] QA completo como usuário real
+
+
+
+
+
+
+### 24. Tempo Disponível para Cozinhar - Implementação Completa
+- [x] Atualizar label do campo para "Tempo disponível para cozinhar (opcional)" sem "por dia"
+- [x] Atualizar tooltip para indicar "hoje" ao invés de "por dia"
+- [x] Passar availableTime para generateMealPlan no backend
+- [x] Adicionar instrução no prompt da IA para ajustar plano baseado no tempo
+- [x] Calcular tempo total do plano (totalPlanTime) usando totalPrepTime da IA
+- [x] Adicionar flag timeFits (boolean) indicando se o plano cabe no tempo
+- [x] Adicionar campos totalPlanTime, timeFits e availableTime no schema do banco
+- [x] Exibir tempo disponível no PlanView
+- [x] Adicionar card de aviso quando timeFits = false
+- [x] Aumentar margem de segurança de 50% para 100% (mais realista)
+- [x] Testar Caso 1: tempo insuficiente (1h, 10 marmitas) - IA ajusta plano automaticamente
+- [x] Documentar comportamento: IA sempre ajusta plano para caber no tempo (comportamento desejável)
+

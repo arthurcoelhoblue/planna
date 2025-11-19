@@ -4,10 +4,12 @@ import ShareModal from "@/components/ShareModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import DashboardLayout from "@/components/DashboardLayout";
 import { APP_TITLE } from "@/const";
 import { trpc } from "@/lib/trpc";
 import {
+  AlertCircle,
   Check,
   ChefHat,
   ChevronDown,
@@ -377,9 +379,9 @@ export default function PlanView() {
                 )}
                 
                 {/* Badge de Tempo Estimado */}
-                {plan.estimatedTime && (
+                {plan.totalPlanTime && (
                   <Badge variant="outline" className="text-sm">
-                    ⏱️ Tempo estimado: {plan.estimatedTime}h (margem: ~30-50%)
+                    ⏱️ Tempo estimado: {Math.round(plan.totalPlanTime / 60)}h{plan.totalPlanTime % 60 > 0 ? `${plan.totalPlanTime % 60}min` : ''} (margem: ~30-50%)
                   </Badge>
                 )}
                 
@@ -429,6 +431,28 @@ export default function PlanView() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Aviso de Tempo Insuficiente */}
+          {plan.timeFits === false && plan.availableTime && plan.totalPlanTime && (
+            <Alert className="bg-yellow-50 border-yellow-200">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                <strong>⚠️ Atenção: Tempo Apertado</strong>
+                <p className="mt-2">
+                  Com o tempo que você informou ({plan.availableTime}h), este plano pode ficar apertado. 
+                  O tempo estimado é de <strong>{Math.round(plan.totalPlanTime / 60)}h{plan.totalPlanTime % 60 > 0 ? `${plan.totalPlanTime % 60}min` : ''}</strong>.
+                </p>
+                <p className="mt-2">
+                  <strong>Considere:</strong>
+                </p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Reduzir o número de marmitas</li>
+                  <li>Simplificar as receitas</li>
+                  <li>Cozinhar em mais de uma sessão</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
           )}
 
           {/* Cardápio */}

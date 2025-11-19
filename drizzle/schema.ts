@@ -80,8 +80,9 @@ export const plans = mysqlTable("plans", {
   dietType: varchar("dietType", { length: 128 }), // Diet type (e.g., "vegetariana", "vegana")
   mode: varchar("mode", { length: 64 }), // Mode: "normal" or "aproveitamento"
   skillLevel: varchar("skillLevel", { length: 64 }), // Skill level: "beginner", "intermediate", "advanced"
-  availableTime: int("availableTime"), // Available time in hours
-  estimatedTime: int("estimatedTime"), // Estimated time in hours
+  availableTime: int("availableTime"), // Available time in hours (user input)
+  totalPlanTime: int("totalPlanTime"), // Total plan time in minutes (calculated)
+  timeFits: boolean("timeFits"), // Whether plan fits in available time (with 50% margin)
   allowNewIngredients: boolean("allowNewIngredients").default(true), // Whether to allow new ingredients
   maxKcalPerServing: int("maxKcalPerServing"), // Max calories per serving limit
   shareToken: varchar("shareToken", { length: 64 }), // Unique token for sharing

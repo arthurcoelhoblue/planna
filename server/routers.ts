@@ -499,6 +499,7 @@ export const appRouter = router({
           dietType: userPref?.dietType || undefined,
           userFavorites,
           userDislikes,
+          availableTime: input.availableTime,
         });
 
         // Save session
@@ -521,6 +522,9 @@ export const appRouter = router({
           requestedVarieties: input.varieties,
           requestedServings: input.servings,
           adjustmentReason: plan.adjustmentReason,
+          availableTime: plan.availableTime,
+          totalPlanTime: plan.totalPlanTime,
+          timeFits: plan.timeFits,
         });
 
         return {

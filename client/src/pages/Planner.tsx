@@ -789,13 +789,13 @@ export default function Planner() {
                 {/* Tempo Disponível */}
                 <div className="space-y-2">
                   <div className="flex items-center">
-                    <Label>Tempo disponível para cozinhar (opcional)</Label>
+                    <Label>Tempo disponível hoje para cozinhar (opcional)</Label>
                     <InfoTooltip
-                      content="Informe quanto tempo você tem por dia para preparar suas marmitas"
+                      content="Informe quanto tempo você tem hoje para cozinhar as marmitas ou a refeição (ex.: 2 horas, 3h30)."
                       examples={[
-                        "1-2 horas: receitas rápidas",
-                        "3-4 horas: receitas moderadas",
-                        "5+ horas: receitas elaboradas",
+                        "1-2 horas: receitas rápidas e simples",
+                        "3-4 horas: receitas moderadas com mais variedade",
+                        "5+ horas: receitas elaboradas e batch cooking",
                       ]}
                     />
                   </div>
@@ -809,7 +809,7 @@ export default function Planner() {
                       max="24"
                       step="1"
                     />
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">horas/dia</span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">horas</span>
                   </div>
                 </div>
 

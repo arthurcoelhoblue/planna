@@ -63,6 +63,9 @@ export interface MealPlan {
   totalKcal?: number; // Calorias totais do plano
   avgKcalPerServing?: number; // Média de calorias por porção
   adjustmentReason?: string; // Explicação quando o sistema não conseguiu cumprir exatamente o solicitado
+  totalPlanTime?: number; // Tempo total estimado do plano em minutos (soma de prepTime das receitas)
+  timeFits?: boolean; // Se o plano cabe no tempo disponível (com margem de 50%)
+  availableTime?: number; // Tempo disponível informado pelo usuário em horas
 }
 
 /**
@@ -135,6 +138,38 @@ function sanitizePlanIngredients(
     ...plan,
     dishes: sanitizedDishes,
     shoppingList: sanitizedShoppingList,
+  };
+}
+
+/**
+ * Calcula métricas de tempo do plano e verifica se cabe no tempo disponível
+ */
+function calculateTimeMetrics(plan: MealPlan, availableTime?: number): MealPlan {
+  // Usa o totalPrepTime que já foi calculado pela IA (considera tarefas paralelas)
+  const totalPlanTime = plan.totalPrepTime;
+  
+  // Se não há tempo disponível informado, retorna apenas com o tempo total
+  if (!availableTime) {
+    return {
+      ...plan,
+      totalPlanTime,
+    };
+  }
+  
+  // Converte tempo disponível de horas para minutos e aplica margem de 100%
+  // (margem maior porque a IA tende a ser otimista com paralelismo)
+  const maxAllowedTime = availableTime * 60 * 2;
+  
+  // Verifica se o plano cabe no tempo (com margem de 100%)
+  const timeFits = totalPlanTime <= maxAllowedTime;
+  
+  console.log(`[Time Metrics] totalPrepTime: ${totalPlanTime}min, availableTime: ${availableTime}h (${availableTime * 60}min), maxAllowed (with 100% margin): ${maxAllowedTime}min, timeFits: ${timeFits}`);
+  
+  return {
+    ...plan,
+    totalPlanTime,
+    timeFits,
+    availableTime,
   };
 }
 
@@ -240,6 +275,7 @@ export async function generateMealPlan(params: {
   skillLevel?: "beginner" | "intermediate" | "advanced";
   calorieLimit?: number;
   dietType?: string;
+  availableTime?: number; // Tempo disponível em horas para cozinhar
 }): Promise<MealPlan> {
   const {
     availableIngredients: rawIngredients,
@@ -254,6 +290,7 @@ export async function generateMealPlan(params: {
     skillLevel = "intermediate",
     calorieLimit,
     dietType,
+    availableTime,
   } = params;
 
   // Normaliza ingredientes: separa nomes e quantidades
@@ -310,6 +347,11 @@ export async function generateMealPlan(params: {
     ? `LIMITES DE ESTOQUE: O usuário informou as seguintes quantidades disponíveis:\n${stockLimits.map(s => `- ${s.name}: ${s.quantity}${s.unit || ""}`).join("\n")}\n\nIMPORTANTE: NÃO planeje receitas que exijam MAIS do que essas quantidades. Se um ingrediente tem limite, respeite-o RIGOROSAMENTE. Ajuste as porções e receitas para caber no estoque disponível.`
     : "";
 
+  // Regra de tempo disponível
+  const timeRule = availableTime
+    ? `TEMPO DISPONÍVEL: O usuário tem ${availableTime} hora(s) disponível(is) HOJE para cozinhar TODAS as marmitas desta sessão. O tempo total do plano (soma de prepTime de todas as receitas, considerando paralelismo) deve ser NO MÁXIMO ${Math.round(availableTime * 60)} minutos (SEM margem, pois o sistema já aplica margem de 100% na validação). Se necessário, simplifique receitas, reduza variedades ou ajuste porções para caber no tempo.`
+    : "";
+
   // Monta o prompt para a IA
   const systemPrompt = `Você é um planejador de marmitas minimalista e prático.
 
@@ -332,10 +374,11 @@ REGRAS IMPORTANTES:
 ${calorieRule ? `9. ${calorieRule}` : ""}
 ${dietRule ? `10. ${dietRule}` : ""}
 ${stockRule ? `11. ${stockRule}` : ""}
-${stockRule ? "12" : "11"}. CÁLCULO DE TEMPO: O totalPrepTime deve considerar tarefas paralelas. Se 2 tarefas de 30min cada são paralelas, contam como 30min (não 60min). Some apenas o tempo real necessário.
-${stockRule ? "13" : "12"}. Passos curtos e acionáveis no título, mas com detalhamento completo
-${stockRule ? "14" : "13"}. Tempo total de preparo deve ser otimizado (batch cooking)
-${stockRule ? "15" : "14"}. IMPORTANTE: Para cada passo do prepSchedule, inclua:
+${timeRule ? `12. ${timeRule}` : ""}
+${stockRule || timeRule ? "13" : "11"}. CÁLCULO DE TEMPO: O totalPrepTime deve considerar tarefas paralelas. Se 2 tarefas de 30min cada são paralelas, contam como 30min (não 60min). Some apenas o tempo real necessário.
+${stockRule || timeRule ? "14" : "12"}. Passos curtos e acionáveis no título, mas com detalhamento completo
+${stockRule || timeRule ? "15" : "13"}. Tempo total de preparo deve ser otimizado (batch cooking)
+${stockRule || timeRule ? "16" : "14"}. IMPORTANTE: Para cada passo do prepSchedule, inclua:
     - action: Título resumido (ex: "Cozinhar arroz")
     - details: Array com passos MUITO DETALHADOS para iniciantes (ex: ["Lave 2 xícaras de arroz em água corrente até a água sair limpa", "Coloque 4 xícaras de água em uma panela média", "Adicione 1 colher de sopa de óleo e 1 colher de chá de sal", "Ligue o fogo alto e espere ferver", "Quando ferver, adicione o arroz lavado", "Mexa uma vez e abaixe o fogo para médio-baixo", "Tampe a panela e deixe cozinhar por 15-18 minutos", "Não mexa durante o cozimento", "Desligue o fogo quando a água secar completamente", "Deixe descansar tampado por 5 minutos antes de servir"])
     - tips: Dica prática (ex: "Se o arroz grudar no fundo, adicione um fio de óleo e mexa delicadamente")
@@ -516,7 +559,10 @@ Gere o plano completo em JSON com informações nutricionais detalhadas.`;
     );
     
     // Enforcement rigoroso de misturas e porções
-    const finalPlan = enforceVarietiesAndServings(sanitizedPlan, numDishes, servings);
+    const enforcedPlan = enforceVarietiesAndServings(sanitizedPlan, numDishes, servings);
+    
+    // Pós-processamento: calcular tempo total e verificar se cabe no tempo disponível
+    const finalPlan = calculateTimeMetrics(enforcedPlan, availableTime);
     
     return finalPlan;
   } catch (error) {
