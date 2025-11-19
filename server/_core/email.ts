@@ -80,6 +80,7 @@ async function sendViaSmtp(
 
 /**
  * Send email via Manus notification API (fallback)
+ * Uses the owner notification system to send emails
  */
 async function sendViaManusApi(
   to: string,
@@ -88,22 +89,37 @@ async function sendViaManusApi(
   text: string
 ): Promise<boolean> {
   try {
-    const response = await fetch(`${ENV.forgeApiUrl}/notification/send`, {
+    // Build endpoint URL (same as notification.ts)
+    const normalizedBase = ENV.forgeApiUrl.endsWith("/")
+      ? ENV.forgeApiUrl
+      : `${ENV.forgeApiUrl}/`;
+    const endpoint = new URL(
+      "webdevtoken.v1.WebDevService/SendNotification",
+      normalizedBase
+    ).toString();
+
+    // Format email content as notification
+    const title = `${subject} (para: ${to})`;
+    const content = `${text}\n\n---\nHTML:\n${html}`;
+
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${ENV.forgeApiKey}`,
+        accept: "application/json",
+        authorization: `Bearer ${ENV.forgeApiKey}`,
+        "content-type": "application/json",
+        "connect-protocol-version": "1",
       },
-      body: JSON.stringify({
-        to,
-        subject,
-        html,
-        text,
-      }),
+      body: JSON.stringify({ title, content }),
     });
 
     if (!response.ok) {
-      console.error("[Email] Manus API error:", await response.text());
+      const detail = await response.text().catch(() => "");
+      console.error(
+        `[Email] Manus API error (${response.status} ${response.statusText})${
+          detail ? `: ${detail}` : ""
+        }`
+      );
       return false;
     }
 
@@ -144,6 +160,10 @@ export async function sendVerificationEmail(
   code: string,
   name?: string
 ): Promise<boolean> {
+  console.log("[Email] sendVerificationEmail called with:", { email, code: code.substring(0, 2) + "****", name });
+  console.log("[Email] SMTP configured:", isSmtpConfigured());
+  console.log("[Email] Forge API URL:", ENV.forgeApiUrl || "NOT SET");
+  console.log("[Email] Forge API Key:", ENV.forgeApiKey ? "SET (***" + ENV.forgeApiKey.slice(-4) + ")" : "NOT SET");
   const subject = "Confirme seu email - Planna";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

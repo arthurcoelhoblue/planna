@@ -691,3 +691,13 @@
 - [x] Criar 11 testes de validação (todos passando)
 - [x] Total: 170 testes passando (100%)
 - [x] Salvar checkpoint para publicação
+
+### 36. Corrigir Envio de Email de Verificação 2FA
+
+- [x] Investigar sistema de envio de emails
+- [x] Verificar configuração de SMTP vs Manus API
+- [x] Identificar causa do não envio (endpoint errado: /notification/send → 404)
+- [x] Corrigir problema (usar /webdevtoken.v1.WebDevService/SendNotification)
+- [x] Testar envio de email localmente (✅ funcionando)
+- [ ] Publicar correção para produção
+- [ ] Testar fluxo completo de registro com 2FA em produção
