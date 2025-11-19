@@ -762,3 +762,15 @@
 - [x] Verificar estrutura de `stripe-products.ts` (id e priceId corretos)
 - [ ] Salvar checkpoint
 
+
+
+
+### 42. Corrigir Fluxo de Registro com Seleção de Plano
+
+- [x] Salvar priceId no localStorage quando usuário clica em "Assinar Pro/Premium"
+- [x] Modificar AuthModal para detectar priceId pendente após registro
+- [x] Redirecionar automaticamente para checkout após registro bem-sucedido
+- [x] Limpar priceId do localStorage após redirecionamento
+- [x] Validar compilação TypeScript (sem erros)
+- [ ] Salvar checkpoint
+

@@ -58,6 +58,8 @@ export default function Home() {
 
   const handleSubscribe = async (priceId: string) => {
     if (!isAuthenticated) {
+      // Salvar priceId para redirecionar após registro
+      localStorage.setItem("pendingPriceId", priceId);
       openAuthModal("register");
       return;
     }

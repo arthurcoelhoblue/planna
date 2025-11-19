@@ -80,9 +80,33 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
     },
   });
 
+  const createCheckout = trpc.subscription.createCheckout.useMutation();
+
   const verifyMutation = trpc.auth.verifyEmailCode.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       onOpenChange(false);
+      
+      // Verificar se há priceId pendente (usuário selecionou plano antes de registrar)
+      const pendingPriceId = localStorage.getItem("pendingPriceId");
+      
+      if (pendingPriceId) {
+        // Limpar localStorage
+        localStorage.removeItem("pendingPriceId");
+        
+        try {
+          // Criar checkout e redirecionar para pagamento
+          const { checkoutUrl } = await createCheckout.mutateAsync({ priceId: pendingPriceId });
+          if (checkoutUrl) {
+            window.location.href = checkoutUrl;
+            return; // Não recarregar a página, pois vai redirecionar
+          }
+        } catch (error) {
+          console.error("Erro ao criar checkout após registro:", error);
+          // Se falhar, continua com fluxo normal
+        }
+      }
+      
+      // Fluxo normal: redirecionar para planner
       setLocation("/planner");
       window.location.reload(); // reload para atualizar estado de auth
     },
