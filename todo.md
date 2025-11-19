@@ -605,3 +605,13 @@
 - [x] Validar formato dos Price IDs
 - [x] Salvar checkpoint
 
+
+
+### 29. Configurar Webhook Secret do Stripe
+
+- [x] Adicionar STRIPE_WEBHOOK_SECRET via webdev_request_secrets
+- [x] Criar 19 testes de validação do webhook (todos passando)
+- [x] Validar formato do secret (whsec_)
+- [x] Validar segurança e comprimento mínimo
+- [x] Salvar checkpoint
+
