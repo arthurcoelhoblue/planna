@@ -65,14 +65,21 @@ export default function Dashboard() {
     },
   });
 
+  // Buscar planos do backend via tRPC
+  const { data: plans } = trpc.subscription.plans.useQuery();
+
   const handleUpgrade = (tier: "pro" | "premium") => {
-    // Get priceId from pricing plans
-    const { PRICING_PLANS } = require("../../../server/stripe-products");
-    const plan = PRICING_PLANS.find((p: any) => p.id === tier);
+    if (!plans) {
+      toast.error("Planos não carregados");
+      return;
+    }
+    
+    const plan = plans.find((p: any) => p.id === tier);
     if (!plan || !plan.priceId) {
       toast.error("Plano não encontrado");
       return;
     }
+    
     createCheckout.mutate({ priceId: plan.priceId });
   };
 

@@ -740,3 +740,13 @@
 - [x] Testar evento customer.subscription.deleted (✅ 200 OK)
 - [ ] Salvar checkpoint final
 
+
+
+
+### 40. Corrigir Bug Crítico no Dashboard - require() de Servidor no Browser
+
+- [x] Remover require("./././server/stripe-products") do Dashboard.tsx
+- [x] Usar trpc.subscription.plans.useQuery() para buscar planos do backend
+- [x] Validar compilação TypeScript (sem erros)
+- [ ] Salvar checkpoint
+
