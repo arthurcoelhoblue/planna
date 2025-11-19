@@ -10,7 +10,7 @@ if (!ENV.stripeSecretKey) {
 }
 
 const stripe = new Stripe(ENV.stripeSecretKey, {
-  apiVersion: "2025-10-29.clover",
+  apiVersion: "2024-11-20.acacia" as any,
   typescript: true,
 });
 

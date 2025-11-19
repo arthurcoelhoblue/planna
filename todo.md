@@ -647,3 +647,15 @@
 - [x] Validar compatibilidade com Price IDs de test mode
 - [x] Salvar checkpoint
 
+
+
+### 33. Corrigir Erro "Erro ao processar pagamento" no Checkout
+
+- [x] Investigar logs do servidor
+- [x] Identificar causa do erro (webhook de Live Mode com chaves de Test Mode)
+- [x] Corrigir versão da API do Stripe (2024-11-20.acacia)
+- [x] Atualizar Webhook Secret para Test Mode
+- [x] Criar 14 testes de integração do checkout (todos passando)
+- [x] Validar configuração completa (129 testes passando)
+- [x] Salvar checkpoint
+
