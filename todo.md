@@ -774,3 +774,22 @@
 - [x] Validar compilação TypeScript (sem erros)
 - [ ] Salvar checkpoint
 
+
+
+
+### 43. Cirurgias de Limpeza - OAuth, ManusDialog e .manus
+
+**Cirurgia 1 - Desligar OAuth Externo:**
+- [x] Remover import de `registerOAuthRoutes` em server/_core/index.ts
+- [x] Remover chamada `registerOAuthRoutes(app)` e adicionar comentário explicativo
+
+**Cirurgia 2 - Remover ManusDialog:**
+- [x] Deletar arquivo client/src/components/ManusDialog.tsx (não usado)
+
+**Cirurgia 3 - Limpar .manus:**
+- [x] Deletar pasta .manus/ do projeto
+- [x] Adicionar `.manus/` ao .gitignore
+
+- [x] Reiniciar servidor para aplicar mudanças
+- [ ] Salvar checkpoint
+
