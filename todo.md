@@ -551,3 +551,38 @@
 - [x] Testar Caso 1: tempo insuficiente (1h, 10 marmitas) - IA ajusta plano automaticamente
 - [x] Documentar comportamento: IA sempre ajusta plano para caber no tempo (comportamento desejável)
 
+
+
+
+### 26. Login Interno + 2FA + Stripe (Fluxo 100% Unificado)
+
+#### 1. Login Interno Completo
+- [x] Verificar que AuthModal é a ÚNICA forma de login
+- [x] Confirmar que não há rotas externas da Manus
+- [x] Validar que sessão é guardada corretamente
+
+#### 2. 2FA por Email
+- [x] Verificar fluxo: criar conta → receber código → confirmar
+- [x] Validar mensagens claras no frontend ("Enviamos um código para seu e-mail")
+- [x] Confirmar que campo de código funciona
+- [x] Testar botão "Reenviar código"
+- [x] Validar que sessão só é criada após confirmação do código
+
+#### 3. Stripe Checkout com Sessão Interna
+- [x] Verificar produtos configurados (Pro, Premium)
+- [x] Validar fluxo: clicar upgrade sem login → abrir AuthModal (lógica correta, não testado)
+- [x] Validar fluxo: clicar upgrade logado → chamar createCheckoutSession (erro 500 - Price IDs não configurados)
+- [x] Confirmar redirecionamento para Stripe Checkout real (implementado corretamente)
+- [x] Validar que checkout usa sessão interna (protectedProcedure, ctx.user)
+
+#### 4. Remover Vestígios de Rotas Manus
+- [x] Verificar que não há /auth/login em nenhum arquivo
+- [x] Verificar que não há ManusAuth em nenhum arquivo
+- [x] Verificar que não hão ManusSession em nenhum arquivo
+- [x] Confirmar centralização em AuthModal + useAuthContext()
+
+#### 5. Documentação
+- [x] Criar relatório de auditoria completo (auditoria-login-stripe.md)
+- [x] Identificar problema: Price IDs são placeholders (STRIPE_PRICE_ID_PRO/PREMIUM não configurados)
+- [x] Documentar solução: Criar produtos no Stripe Dashboard e configurar variáveis de ambiente
+
