@@ -725,3 +725,18 @@
 - [x] Testar fluxo de checkout refinado (183 testes passando)
 - [ ] Salvar checkpoint
 
+
+
+### 39. Testar Webhooks do Stripe com Stripe CLI
+
+- [x] Configurar webhook signing secret do Stripe CLI
+- [x] Configurar Price IDs reais (Pro: price_1SUPvOKHYuEw9LKlDGmXKmjD, Premium: price_1SVInaKHYuEw9LKlKEAg3pps)
+- [x] Atualizar Price IDs no backend (stripe-products.ts, stripe-webhook.ts)
+- [x] Atualizar Price IDs no frontend (Home.tsx, UpgradeModal.tsx)
+- [x] Corrigir preços no UpgradeModal (R$ 9,90 Pro, R$ 14,99 Premium)
+- [x] Testar evento checkout.session.completed (✅ 200 OK)
+- [x] Testar evento customer.subscription.created (✅ 200 OK)
+- [x] Testar evento customer.subscription.updated (✅ 200 OK)
+- [x] Testar evento customer.subscription.deleted (✅ 200 OK)
+- [ ] Salvar checkpoint final
+

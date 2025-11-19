@@ -14,9 +14,14 @@ import { getUserByOpenId } from "./db";
  * Mapeia Price ID para tier
  */
 function getTierFromPriceId(priceId: string): "free" | "pro" | "premium" {
-  // Será atualizado quando o usuário fornecer os Price IDs reais
+  // Price IDs reais do Stripe (modo teste)
+  if (priceId === "price_1SUPvOKHYuEw9LKlDGmXKmjD") return "pro"; // Planna Pro
+  if (priceId === "price_1SVInaKHYuEw9LKlKEAg3pps") return "premium"; // Planna Premium
+  
+  // Fallback para identificação por nome (caso Price ID mude)
   if (priceId.includes("pro")) return "pro";
   if (priceId.includes("premium")) return "premium";
+  
   return "free";
 }
 
@@ -25,6 +30,13 @@ function getTierFromPriceId(priceId: string): "free" | "pro" | "premium" {
  */
 export async function handleStripeWebhook(req: Request, res: Response) {
   const sig = req.headers["stripe-signature"];
+
+  console.log("[Webhook] Received request");
+  console.log("[Webhook] Signature present:", !!sig);
+  console.log("[Webhook] Body type:", typeof req.body);
+  console.log("[Webhook] Body is Buffer:", Buffer.isBuffer(req.body));
+  console.log("[Webhook] Webhook secret configured:", !!ENV.stripeWebhookSecret);
+  console.log("[Webhook] Webhook secret length:", ENV.stripeWebhookSecret?.length || 0);
 
   if (!sig) {
     console.error("[Webhook] Missing stripe-signature header");
@@ -35,8 +47,10 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, ENV.stripeWebhookSecret);
+    console.log("[Webhook] Signature verified successfully");
   } catch (err: any) {
     console.error("[Webhook] Signature verification failed:", err.message);
+    console.error("[Webhook] Error details:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 

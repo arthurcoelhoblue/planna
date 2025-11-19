@@ -8,6 +8,12 @@ import { ChefHat, Clock, ShoppingCart, Sparkles, Star, TrendingUp, Users } from 
 import { useState } from "react";
 import { Link } from "wouter";
 
+// Price IDs do Stripe (modo teste)
+const STRIPE_PRICE_IDS = {
+  pro: "price_1SUPvOKHYuEw9LKlDGmXKmjD", // Planna Pro - R$ 9,90/mês
+  premium: "price_1SVInaKHYuEw9LKlKEAg3pps", // Planna Premium - R$ 14,99/mês
+};
+
 const testimonials = [
   {
     name: "Ana Paula Silva",
@@ -384,7 +390,7 @@ export default function Home() {
                 </ul>
                 <Button
                   className="w-full"
-                  onClick={() => handleSubscribe("price_1SVFrbASdTYHUTQIJPDdLCTy")}
+                  onClick={() => handleSubscribe(STRIPE_PRICE_IDS.pro)}
                   disabled={createCheckout.isPending}
                 >
                   {createCheckout.isPending ? "Processando..." : "Assinar Pro"}
@@ -427,7 +433,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleSubscribe("price_1SVFryASdTYHUTQIh6jbn8K0")}
+                  onClick={() => handleSubscribe(STRIPE_PRICE_IDS.premium)}
                   disabled={createCheckout.isPending}
                 >
                   {createCheckout.isPending ? "Processando..." : "Assinar Premium"}

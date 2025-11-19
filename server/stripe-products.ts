@@ -53,7 +53,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: "Pro",
     description: "Para quem leva a sério",
     price: 9.90,
-    priceId: process.env.STRIPE_PRICE_ID_PRO || "price_1SVFrbASdTYHUTQIJPDdLCTy",
+    priceId: "price_1SUPvOKHYuEw9LKlDGmXKmjD", // Planna Pro (R$ 9,90/mês)
     interval: "month",
     features: {
       plansPerMonth: 20,
@@ -72,7 +72,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: "Premium",
     description: "Tudo ilimitado",
     price: 14.99,
-    priceId: process.env.STRIPE_PRICE_ID_PREMIUM || "price_1SVFryASdTYHUTQIh6jbn8K0",
+    priceId: "price_1SVInaKHYuEw9LKlKEAg3pps", // Planna Premium (R$ 14,99/mês)
     interval: "month",
     features: {
       plansPerMonth: -1, // Ilimitado

@@ -9,5 +9,9 @@ export const ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "",
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  // Webhook secret do Stripe CLI para testes locais
+  // Forçar uso do hardcoded porque o env está truncado em 38 chars
+  stripeWebhookSecret: process.env.NODE_ENV === "production" 
+    ? process.env.STRIPE_WEBHOOK_SECRET || ""
+    : "whsec_0e10fcb25a5b162eefdd89255d6a177928b00b131026168f3d172bfd14bd88a7",
 };

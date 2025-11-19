@@ -10,6 +10,12 @@ import { trpc } from "@/lib/trpc";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 
+// Price IDs do Stripe (modo teste)
+const STRIPE_PRICE_IDS = {
+  pro: "price_1SUPvOKHYuEw9LKlDGmXKmjD", // Planna Pro - R$ 9,90/mês
+  premium: "price_1SVInaKHYuEw9LKlKEAg3pps", // Planna Premium - R$ 14,99/mês
+};
+
 interface UpgradeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,7 +64,7 @@ export function UpgradeModal({ open, onOpenChange, reason }: UpgradeModalProps) 
             <div>
               <h3 className="text-xl font-bold">Pro</h3>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-3xl font-bold">R$ 29,90</span>
+                <span className="text-3xl font-bold">R$ 9,90</span>
                 <span className="text-muted-foreground">/mês</span>
               </div>
             </div>
@@ -87,7 +93,7 @@ export function UpgradeModal({ open, onOpenChange, reason }: UpgradeModalProps) 
             <Button
               className="w-full"
               size="lg"
-              onClick={() => handleUpgrade("price_1QlYqfIiVJZPDdnGqfXKOqLR", "pro")}
+              onClick={() => handleUpgrade(STRIPE_PRICE_IDS.pro, "pro")}
               disabled={loadingPlan !== null}
             >
               {loadingPlan === "pro" ? (
@@ -106,7 +112,7 @@ export function UpgradeModal({ open, onOpenChange, reason }: UpgradeModalProps) 
             <div>
               <h3 className="text-xl font-bold">Premium</h3>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-3xl font-bold">R$ 49,90</span>
+                <span className="text-3xl font-bold">R$ 14,99</span>
                 <span className="text-muted-foreground">/mês</span>
               </div>
             </div>
@@ -136,7 +142,7 @@ export function UpgradeModal({ open, onOpenChange, reason }: UpgradeModalProps) 
               className="w-full"
               size="lg"
               variant="outline"
-              onClick={() => handleUpgrade("price_1QlYr8IiVJZPDdnGxzwKxGkb", "premium")}
+              onClick={() => handleUpgrade(STRIPE_PRICE_IDS.premium, "premium")}
               disabled={loadingPlan !== null}
             >
               {loadingPlan === "premium" ? (
