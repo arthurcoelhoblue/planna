@@ -255,6 +255,11 @@ export const appRouter = router({
           throw new Error("Usuário ou senha inválidos");
         }
 
+        // Validar que o email existe
+        if (!user.email) {
+          throw new Error("Usuário sem email cadastrado");
+        }
+
         // 2) Verificar senha
         const ok = await verifyPassword(input.password, user.passwordHash);
         if (!ok) {
@@ -278,7 +283,7 @@ export const appRouter = router({
 
         // 5) Enviar e-mail com código
         const emailSent = await sendVerificationEmail(
-          user.email!,
+          user.email,
           code,
           user.name || undefined,
         );

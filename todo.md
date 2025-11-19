@@ -681,3 +681,13 @@
 - [x] Atualizar Price IDs nos testes (novos IDs do Stripe)
 - [x] Todos os 159 testes passando (100%)
 - [x] Salvar checkpoint
+
+### 35. Corrigir Erro 500 no Login com 2FA
+
+- [x] Investigar procedimento loginStart no backend
+- [x] Identificar causa do erro 500 (user.email! sem validação)
+- [x] Adicionar validação de email antes de enviar código
+- [x] Remover non-null assertion (!) do user.email
+- [x] Criar 11 testes de validação (todos passando)
+- [x] Total: 170 testes passando (100%)
+- [x] Salvar checkpoint para publicação
