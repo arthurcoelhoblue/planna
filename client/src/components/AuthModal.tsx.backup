@@ -19,11 +19,8 @@ interface AuthModalProps {
   defaultMode?: "login" | "register";
 }
 
-type AuthMode = "login" | "register" | "reset" | "verify";
-type VerificationContext = "register" | "login";
-
 export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthModalProps) {
-  const [mode, setMode] = useState<AuthMode>(defaultMode);
+  const [mode, setMode] = useState<"login" | "register" | "reset" | "verify">(defaultMode);
   const [, setLocation] = useLocation();
 
   // Login state
@@ -39,20 +36,16 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
   const [verificationCode, setVerificationCode] = useState("");
   const [pendingUserId, setPendingUserId] = useState<number | null>(null);
   const [pendingEmail, setPendingEmail] = useState("");
-  const [verificationContext, setVerificationContext] =
-    useState<VerificationContext>("register");
 
   // Reset state
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
 
-  // LOGIN AGORA USA loginStart (etapa 1 do 2FA)
-  const loginMutation = trpc.auth.loginStart.useMutation({
-    onSuccess: (data) => {
-      setPendingUserId(data.userId);
-      setPendingEmail(data.email || "");
-      setVerificationContext("login");
-      setMode("verify");
+  const loginMutation = trpc.auth.loginLocal.useMutation({
+    onSuccess: () => {
+      onOpenChange(false);
+      setLocation("/planner");
+      window.location.reload(); // Reload to update auth state
     },
     onError: (error) => {
       alert(error.message);
@@ -61,9 +54,9 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
 
   const registerMutation = trpc.auth.registerLocal.useMutation({
     onSuccess: (data) => {
+      // Transition to verification mode
       setPendingUserId(data.userId);
-      setPendingEmail(data.email || "");
-      setVerificationContext("register");
+      setPendingEmail(data.email);
       setMode("verify");
     },
     onError: (error) => {
@@ -84,7 +77,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
     onSuccess: () => {
       onOpenChange(false);
       setLocation("/planner");
-      window.location.reload(); // reload para atualizar estado de auth
+      window.location.reload(); // Reload to trigger onboarding
     },
     onError: (error) => {
       alert(error.message);
@@ -148,7 +141,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
             <DialogHeader>
               <DialogTitle>Entrar no Planna</DialogTitle>
               <DialogDescription>
-                Entre com seu email e senha para receber o código de acesso.
+                Entre com seu email e senha para acessar sua conta
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -288,15 +281,9 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
         {mode === "verify" && (
           <>
             <DialogHeader>
-              <DialogTitle>
-                {verificationContext === "register"
-                  ? "Confirme seu e-mail"
-                  : "Confirme seu login"}
-              </DialogTitle>
+              <DialogTitle>Confirme seu Email</DialogTitle>
               <DialogDescription>
-                {verificationContext === "register"
-                  ? `Enviamos um código de verificação para ${pendingEmail}. Digite o código abaixo para ativar sua conta.`
-                  : `Enviamos um código de acesso para ${pendingEmail}. Digite o código abaixo para entrar com segurança.`}
+                Enviamos um código de 6 dígitos para <strong>{pendingEmail}</strong>
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleVerify} className="space-y-4">

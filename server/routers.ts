@@ -165,18 +165,20 @@ export const appRouter = router({
       .input(
         z.object({
           userId: z.number(),
-        })
+        }),
       )
       .mutation(async ({ input }) => {
         const { getDb } = await import("./db");
         const { users, emailVerificationCodes } = await import("../drizzle/schema");
         const { eq } = await import("drizzle-orm");
-        const { generateVerificationCode, sendVerificationEmail } = await import("./_core/emailVerification");
+        const { generateVerificationCode, sendVerificationEmail } = await import(
+          "./_core/emailVerification"
+        );
 
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        // Get user
+        // Buscar usuário
         const [user] = await db
           .select()
           .from(users)
@@ -187,15 +189,15 @@ export const appRouter = router({
           throw new Error("Usuário não encontrado");
         }
 
-        if (user.emailVerified) {
-          throw new Error("Email já verificado");
-        }
+        // 👉 DIFERENTE DO CÓDIGO ANTIGO:
+        // NÃO bloqueamos mais se emailVerified = true,
+        // porque agora esse endpoint também serve para login com 2FA.
 
-        // Generate new code
+        // Gerar novo código
         const code = generateVerificationCode();
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
-        // Save new code
+        // Salvar novo código
         await db.insert(emailVerificationCodes).values({
           userId: user.id,
           code,
@@ -203,37 +205,44 @@ export const appRouter = router({
           verified: false,
         });
 
-        // Send email
-        const emailSent = await sendVerificationEmail(user.email, code, user.name || undefined);
+        // Enviar e-mail
+        const emailSent = await sendVerificationEmail(
+          user.email,
+          code,
+          user.name || undefined,
+        );
 
         if (!emailSent) {
           throw new Error("Falha ao enviar e-mail. Tente novamente.");
         }
 
-        return { 
-          success: true, 
-          message: "Novo código enviado para seu e-mail" 
+        return {
+          success: true,
+          message: "Novo código enviado para seu e-mail",
         };
       }),
 
-    loginLocal: publicProcedure
+    // 🔐 LOGIN EM 2 ETAPAS (1: senha + envio de código)
+    loginStart: publicProcedure
       .input(
         z.object({
           email: z.string().email("Email inválido"),
           password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-        })
+        }),
       )
-      .mutation(async ({ input, ctx }) => {
+      .mutation(async ({ input }) => {
         const { getDb } = await import("./db");
         const { verifyPassword } = await import("./_core/passwords");
-        const { users } = await import("../drizzle/schema");
+        const { users, emailVerificationCodes } = await import("../drizzle/schema");
         const { eq } = await import("drizzle-orm");
-        const { sdk } = await import("./_core/sdk");
+        const { generateVerificationCode, sendVerificationEmail } = await import(
+          "./_core/emailVerification"
+        );
 
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        // Find user by email
+        // 1) Buscar usuário pelo e-mail
         const existing = await db
           .select()
           .from(users)
@@ -241,35 +250,54 @@ export const appRouter = router({
           .limit(1);
 
         const user = existing[0];
+
         if (!user || user.loginMethod !== "local" || !user.passwordHash) {
           throw new Error("Usuário ou senha inválidos");
         }
 
-        // Verify password
+        // 2) Verificar senha
         const ok = await verifyPassword(input.password, user.passwordHash);
         if (!ok) {
           throw new Error("Usuário ou senha inválidos");
         }
 
-        // Update last signed in
-        await db
-          .update(users)
-          .set({ lastSignedIn: new Date() })
-          .where(eq(users.id, user.id));
+        // 3) (opcional) Atualizar lastSignedIn só depois do login completo,
+        // mas se você quiser manter aqui, tudo bem. Eu sugiro manter no verifyEmailCode
+        // para garantir que o login só é considerado completo após o 2FA.
 
-        // Create session
-        const token = await sdk.createSessionToken(user.openId, {
-          name: user.name || "",
+        // 4) Gerar código de 2FA para LOGIN
+        const code = generateVerificationCode();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+        await db.insert(emailVerificationCodes).values({
+          userId: user.id,
+          code,
+          expiresAt,
+          verified: false,
         });
 
-        const cookieOptions = getSessionCookieOptions(ctx.req);
-        const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
-        ctx.res.cookie(COOKIE_NAME, token, {
-          ...cookieOptions,
-          maxAge: ONE_YEAR_MS,
-        });
+        // 5) Enviar e-mail com código
+        const emailSent = await sendVerificationEmail(
+          user.email!,
+          code,
+          user.name || undefined,
+        );
 
-        return { success: true, user: { id: user.id, name: user.name, email: user.email } };
+        if (!emailSent) {
+          console.error("[Auth] Failed to send login 2FA email");
+          throw new Error(
+            "Não foi possível enviar o código de verificação. Tente novamente em alguns instantes.",
+          );
+        }
+
+        // 6) NÃO cria sessão aqui – sessão só é criada em verifyEmailCode
+        // depois do usuário informar o código.
+        return {
+          success: true,
+          userId: user.id,
+          email: user.email,
+          message: "Código de login enviado para seu e-mail",
+        };
       }),
 
     // Password reset

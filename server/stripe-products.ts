@@ -53,7 +53,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: "Pro",
     description: "Para quem leva a sério",
     price: 9.90,
-    priceId: process.env.STRIPE_PRICE_ID_PRO || "price_1SVAW1ASdTYHUTQI7C2avtHK",
+    priceId: process.env.STRIPE_PRICE_ID_PRO || "price_1SVFrbASdTYHUTQIJPDdLCTy",
     interval: "month",
     features: {
       plansPerMonth: 20,
@@ -72,7 +72,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: "Premium",
     description: "Tudo ilimitado",
     price: 14.99,
-    priceId: process.env.STRIPE_PRICE_ID_PREMIUM || "price_1SVAWvASdTYHUTQIPpNdIvaa",
+    priceId: process.env.STRIPE_PRICE_ID_PREMIUM || "price_1SVFryASdTYHUTQIh6jbn8K0",
     interval: "month",
     features: {
       plansPerMonth: -1, // Ilimitado

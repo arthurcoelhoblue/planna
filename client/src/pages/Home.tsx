@@ -384,7 +384,7 @@ export default function Home() {
                 </ul>
                 <Button
                   className="w-full"
-                  onClick={() => handleSubscribe("price_1SVAW1ASdTYHUTQI7C2avtHK")}
+                  onClick={() => handleSubscribe("price_1SVFrbASdTYHUTQIJPDdLCTy")}
                   disabled={createCheckout.isPending}
                 >
                   {createCheckout.isPending ? "Processando..." : "Assinar Pro"}
@@ -427,7 +427,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleSubscribe("price_1SVAWvASdTYHUTQIPpNdIvaa")}
+                  onClick={() => handleSubscribe("price_1SVFryASdTYHUTQIh6jbn8K0")}
                   disabled={createCheckout.isPending}
                 >
                   {createCheckout.isPending ? "Processando..." : "Assinar Premium"}

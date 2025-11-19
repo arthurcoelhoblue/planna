@@ -659,3 +659,25 @@
 - [x] Validar configuração completa (129 testes passando)
 - [x] Salvar checkpoint
 
+
+
+### 34. Investigar Erro Real no Checkout (Relatado pelo Usuário)
+
+- [ ] Reproduzir erro no frontend
+- [ ] Capturar logs do servidor em tempo real
+- [ ] Identificar causa raiz do erro
+- [ ] Corrigir problema
+- [ ] Testar checkout completo end-to-end
+- [ ] Salvar checkpoint
+
+
+### 34. Implementar Autenticação 2FA via Email
+
+- [x] Atualizar resendVerificationCode no backend (remover bloqueio de emailVerified)
+- [x] Adicionar loginStart no backend (login em 2 etapas)
+- [x] Remover loginLocal antigo
+- [x] Substituir AuthModal.tsx completo no frontend
+- [x] Criar 30 testes de 2FA (registro e login)
+- [x] Atualizar Price IDs nos testes (novos IDs do Stripe)
+- [x] Todos os 159 testes passando (100%)
+- [x] Salvar checkpoint
