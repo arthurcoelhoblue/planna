@@ -418,6 +418,7 @@
 - [x] Aplicar DashboardLayout em /payment-failed (se existir)
 - [x] Aplicar DashboardLayout em /dashboard
 - [x] Aplicar DashboardLayout em /shared/:token (se for rota protegida)
+- [x] Remover headers customizados duplicados do Planner, PlanView e History
 
 #### Botão de Logout
 - [x] Garantir que botão de logout aparece no canto superior direito
@@ -428,6 +429,7 @@
 - [x] Remover qualquer redirecionamento para "/auth/login"
 - [x] Remover links para rotas externas da Manus
 - [x] Garantir que rotas protegidas usam AuthModal interno
+- [x] Verificar que não há import de getLoginUrl() em nenhum arquivo
 
 #### Testes de QA
 - [x] Teste: Login → navegar para /planner → ver layout e logout

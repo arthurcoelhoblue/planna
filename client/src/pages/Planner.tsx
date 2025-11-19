@@ -345,22 +345,6 @@ export default function Planner() {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-background">
-        {/* Header */}
-        <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <ChefHat className="w-8 h-8 text-primary" />
-              <span className="text-2xl font-bold text-primary">{APP_TITLE}</span>
-            </div>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/history">
-              <Button variant="ghost">Histórico</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
 
       <OnboardingModal
         open={showOnboarding}
