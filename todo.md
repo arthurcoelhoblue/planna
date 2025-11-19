@@ -701,3 +701,16 @@
 - [x] Testar envio de email localmente (✅ funcionando)
 - [ ] Publicar correção para produção
 - [ ] Testar fluxo completo de registro com 2FA em produção
+
+
+
+### 37. Implementar Envio de Email Direto para Usuário (não para Owner)
+
+- [x] Investigar opções de envio de email (SMTP vs serviços transacionais)
+- [x] Escolher solução (Gmail SMTP)
+- [x] Implementar envio de email direto para o endereço do usuário
+- [x] Configurar credenciais de email (apps@grupoblue.com.br)
+- [x] Testar envio de email real (✅ funcionando)
+- [x] Validar recebimento em caixa de entrada do usuário (✅ chegou no spam)
+- [ ] Publicar para produção
+

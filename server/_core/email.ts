@@ -1,6 +1,6 @@
 /**
- * Email service with SMTP support
- * Supports both SMTP (nodemailer) and Manus notification API
+ * Email service with SMTP (Gmail)
+ * Priority: SMTP > Manus notification API (fallback)
  */
 
 import nodemailer from "nodemailer";
@@ -133,7 +133,7 @@ async function sendViaManusApi(
 
 /**
  * Send email using configured method
- * Tries SMTP first if configured, falls back to Manus API
+ * Priority: SMTP (Gmail) > Manus API (fallback)
  */
 export async function sendEmail(
   to: string,
@@ -141,19 +141,21 @@ export async function sendEmail(
   html: string,
   text: string
 ): Promise<boolean> {
-  // Try SMTP if configured
+  // Try SMTP (Gmail) first
   if (isSmtpConfigured()) {
     const sent = await sendViaSmtp(to, subject, html, text);
     if (sent) return true;
     console.warn("[Email] SMTP failed, trying Manus API fallback...");
   }
 
-  // Fallback to Manus API
+  // Fallback to Manus API (sends to owner as notification)
+  console.warn("[Email] Using Manus API fallback (will notify owner, not user)");
   return sendViaManusApi(to, subject, html, text);
 }
 
 /**
  * Send verification code email
+ * Uses SMTP (Gmail) for direct delivery to user
  */
 export async function sendVerificationEmail(
   email: string,
@@ -162,8 +164,7 @@ export async function sendVerificationEmail(
 ): Promise<boolean> {
   console.log("[Email] sendVerificationEmail called with:", { email, code: code.substring(0, 2) + "****", name });
   console.log("[Email] SMTP configured:", isSmtpConfigured());
-  console.log("[Email] Forge API URL:", ENV.forgeApiUrl || "NOT SET");
-  console.log("[Email] Forge API Key:", ENV.forgeApiKey ? "SET (***" + ENV.forgeApiKey.slice(-4) + ")" : "NOT SET");
+
   const subject = "Confirme seu email - Planna";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -188,6 +189,7 @@ export async function sendVerificationEmail(
 
 /**
  * Send password reset email
+ * Uses SMTP (Gmail) for direct delivery to user
  */
 export async function sendPasswordResetEmail(
   email: string,
