@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `email_verification_codes` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`code` varchar(6) NOT NULL,\n\t`expiresAt` timestamp NOT NULL,\n\t`verified` boolean NOT NULL DEFAULT false,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `email_verification_codes_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `users` ADD `emailVerified` boolean DEFAULT false NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jqMZP8uptaqoP6.896a312398d9 --database WDxbdCBK55YBCHv5qRB4fU --execute CREATE TABLE `email_verification_codes` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`code` varchar(6) NOT NULL,\n\t`expiresAt` timestamp NOT NULL,\n\t`verified` boolean NOT NULL DEFAULT false,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `email_verification_codes_id` PRIMARY KEY(`id`)\n);\nALTER TABLE `users` ADD `emailVerified` boolean DEFAULT false NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1169
+}
