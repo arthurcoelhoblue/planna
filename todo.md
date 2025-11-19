@@ -625,3 +625,25 @@
 - [x] Webhook POST continua funcionando normalmente
 - [x] Salvar checkpoint
 
+
+
+### 31. Resolver Erro "No such price" - Test Mode vs Live Mode
+
+- [x] Diagnosticar problema (Price IDs de test mode, sistema em live mode)
+- [x] Criar guia completo explicando test mode vs live mode
+- [x] Documentar 2 opções: usar test mode ou migrar para live mode
+- [x] Criar checklists para ambas as opções
+- [x] Incluir FAQ e cartões de teste
+
+
+
+### 32. Configurar Chaves de Test Mode do Stripe
+
+- [x] Adicionar STRIPE_PUBLISHABLE_KEY (test mode) via webdev_request_secrets
+- [x] Adicionar STRIPE_SECRET_KEY (test mode) via webdev_request_secrets
+- [x] Criar 20 testes de validação das chaves (todos passando)
+- [x] Validar formato das chaves (pk_test_ e sk_test_)
+- [x] Validar inicialização do Stripe SDK
+- [x] Validar compatibilidade com Price IDs de test mode
+- [x] Salvar checkpoint
+
