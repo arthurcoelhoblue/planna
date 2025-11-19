@@ -748,19 +748,28 @@ export const appRouter = router({
       .input(z.object({ priceId: z.string() }))
       .mutation(async ({ ctx, input }) => {
         const stripe = (await import("./_core/stripe")).default;
-        const { PRICING_PLANS } = await import("./stripe-products");
+        const { getUserActiveSubscription } = await import("./subscription-service");
 
-        // Verificar se price ID é válido
-        const plan = PRICING_PLANS.find((p) => p.priceId === input.priceId);
-        if (!plan) {
-          throw new Error("Plano inválido");
+        // Guard extra por segurança e clareza
+        const user = ctx.user;
+        if (!user) {
+          throw new Error("Usuário não autenticado");
+        }
+        if (!user.email) {
+          throw new Error("Usuário sem e-mail cadastrado");
+        }
+        if (user.subscriptionTier && user.subscriptionTier !== "free") {
+          // Opcional: impedir criar novo checkout se já tem tier Pro/Premium ativo
+          const active = await getUserActiveSubscription(user.id);
+          if (active) {
+            throw new Error("Você já possui uma assinatura ativa.");
+          }
         }
 
-        // Criar checkout session
         const session = await stripe.checkout.sessions.create({
           mode: "subscription",
-          customer_email: ctx.user.email || undefined,
-          client_reference_id: ctx.user.id.toString(),
+          customer_email: user.email,
+          client_reference_id: user.id.toString(),
           line_items: [
             {
               price: input.priceId,
@@ -771,9 +780,9 @@ export const appRouter = router({
           cancel_url: `${ctx.req.headers.origin}/?checkout=canceled`,
           allow_promotion_codes: true,
           metadata: {
-            user_id: ctx.user.id.toString(),
-            customer_email: ctx.user.email || "",
-            customer_name: ctx.user.name || "",
+            user_id: user.id.toString(),
+            customer_email: user.email,
+            customer_name: user.name || "",
           },
         });
 

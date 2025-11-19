@@ -714,3 +714,14 @@
 - [x] Validar recebimento em caixa de entrada do usuário (✅ chegou no spam)
 - [ ] Publicar para produção
 
+
+
+### 38. Refinar Mutation createCheckout do Stripe
+
+- [x] Adicionar guards de segurança (usuário autenticado, email obrigatório)
+- [x] Validar assinatura ativa antes de criar novo checkout
+- [x] Adicionar metadata completo para rastreamento
+- [x] Habilitar códigos promocionais (já estava ativo)
+- [x] Testar fluxo de checkout refinado (183 testes passando)
+- [ ] Salvar checkpoint
+
