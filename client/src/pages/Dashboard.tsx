@@ -56,30 +56,42 @@ export default function Dashboard() {
     createPortalSession.mutate();
   };
 
+  // Carrega planos de preço a partir do back (Stripe products)
+  const { data: pricingPlans, isLoading: pricingLoading } =
+    trpc.subscription.plans.useQuery();
+
   const createCheckout = trpc.subscription.createCheckout.useMutation({
     onSuccess: (data: any) => {
-      window.location.href = data.checkoutUrl;
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast.error("Checkout não retornou URL de pagamento.");
+      }
     },
     onError: (error: any) => {
+      console.error("Erro ao criar checkout:", error);
       toast.error(error.message || "Erro ao criar checkout");
     },
   });
 
-  // Buscar planos do backend via tRPC
-  const { data: plans } = trpc.subscription.plans.useQuery();
-
   const handleUpgrade = (tier: "pro" | "premium") => {
-    if (!plans) {
-      toast.error("Planos não carregados");
+    if (pricingLoading) {
+      toast.info("Carregando planos, tente novamente em instantes.");
       return;
     }
-    
-    const plan = plans.find((p: any) => p.id === tier);
+
+    if (!pricingPlans || pricingPlans.length === 0) {
+      toast.error("Planos indisponíveis. Tente novamente em alguns minutos.");
+      return;
+    }
+
+    const plan = pricingPlans.find((p: any) => p.id === tier);
+
     if (!plan || !plan.priceId) {
-      toast.error("Plano não encontrado");
+      toast.error("Plano não encontrado.");
       return;
     }
-    
+
     createCheckout.mutate({ priceId: plan.priceId });
   };
 

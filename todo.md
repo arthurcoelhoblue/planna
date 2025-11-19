@@ -750,3 +750,15 @@
 - [x] Validar compilação TypeScript (sem erros)
 - [ ] Salvar checkpoint
 
+
+
+
+### 41. Aplicar Patch Cirúrgico no Dashboard (Prompt do Usuário)
+
+- [x] Substituir bloco completo do Stripe portal no Dashboard.tsx
+- [x] Adicionar `pricingPlans` e `pricingLoading` via `trpc.subscription.plans.useQuery()`
+- [x] Melhorar tratamento de erros no `createCheckout` (log + validação de URL)
+- [x] Adicionar validação de loading state em `handleUpgrade`
+- [x] Verificar estrutura de `stripe-products.ts` (id e priceId corretos)
+- [ ] Salvar checkpoint
+
