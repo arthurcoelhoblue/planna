@@ -52,8 +52,8 @@ export const PRICING_PLANS: PricingPlan[] = [
     id: "pro",
     name: "Pro",
     description: "Para quem leva a sério",
-    price: 29.90,
-    priceId: process.env.STRIPE_PRICE_ID_PRO || "price_pro_placeholder", // Atualizar após criar no Stripe
+    price: 9.90,
+    priceId: process.env.STRIPE_PRICE_ID_PRO || "price_1SVAW1ASdTYHUTQI7C2avtHK",
     interval: "month",
     features: {
       plansPerMonth: 20,
@@ -71,8 +71,8 @@ export const PRICING_PLANS: PricingPlan[] = [
     id: "premium",
     name: "Premium",
     description: "Tudo ilimitado",
-    price: 49.90,
-    priceId: process.env.STRIPE_PRICE_ID_PREMIUM || "price_premium_placeholder", // Atualizar após criar no Stripe
+    price: 14.99,
+    priceId: process.env.STRIPE_PRICE_ID_PREMIUM || "price_1SVAWvASdTYHUTQIPpNdIvaa",
     interval: "month",
     features: {
       plansPerMonth: -1, // Ilimitado

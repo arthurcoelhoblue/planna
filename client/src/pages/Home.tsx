@@ -356,7 +356,7 @@ export default function Home() {
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold mb-2">Pro</h3>
                   <div className="text-4xl font-bold text-primary mb-2">
-                    R$ 29,90
+                    R$ 9,90
                   </div>
                   <p className="text-sm text-muted-foreground">por mês</p>
                 </div>
@@ -384,7 +384,7 @@ export default function Home() {
                 </ul>
                 <Button
                   className="w-full"
-                  onClick={() => handleSubscribe("price_pro_placeholder")}
+                  onClick={() => handleSubscribe("price_1SVAW1ASdTYHUTQI7C2avtHK")}
                   disabled={createCheckout.isPending}
                 >
                   {createCheckout.isPending ? "Processando..." : "Assinar Pro"}
@@ -398,7 +398,7 @@ export default function Home() {
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold mb-2">Premium</h3>
                   <div className="text-4xl font-bold text-primary mb-2">
-                    R$ 49,90
+                    R$ 14,99
                   </div>
                   <p className="text-sm text-muted-foreground">por mês</p>
                 </div>
@@ -427,7 +427,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleSubscribe("price_premium_placeholder")}
+                  onClick={() => handleSubscribe("price_1SVAWvASdTYHUTQIPpNdIvaa")}
                   disabled={createCheckout.isPending}
                 >
                   {createCheckout.isPending ? "Processando..." : "Assinar Premium"}

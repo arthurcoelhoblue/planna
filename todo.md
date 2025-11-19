@@ -594,3 +594,14 @@
 - [x] Executar testes para validar que ambos os emails são reconhecidos como VIP
 - [x] Salvar checkpoint
 
+
+
+### 28. Conectar Produtos do Stripe e Atualizar Preços
+
+- [x] Atualizar preços no stripe-products.ts (Pro R$ 9,90 e Premium R$ 14,99)
+- [x] Atualizar preços na Home.tsx (seção de pricing)
+- [x] Configurar Price IDs reais do Stripe (hardcoded com fallback para env vars)
+- [x] Criar 16 testes de integração Stripe (todos passando)
+- [x] Validar formato dos Price IDs
+- [x] Salvar checkpoint
+
