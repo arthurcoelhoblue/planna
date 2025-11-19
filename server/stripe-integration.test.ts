@@ -21,12 +21,12 @@ describe("Stripe Integration", () => {
 
     it("should have correct Pro Price ID from Stripe", () => {
       const proPlan = PRICING_PLANS.find((p) => p.id === "pro");
-      expect(proPlan?.priceId).toBe("price_1SVFrbASdTYHUTQIJPDdLCTy");
+      expect(proPlan?.priceId).toBe("price_1SUPvOKHYuEw9LKlDGmXKmjD");
     });
 
     it("should have correct Premium Price ID from Stripe", () => {
       const premiumPlan = PRICING_PLANS.find((p) => p.id === "premium");
-      expect(premiumPlan?.priceId).toBe("price_1SVFryASdTYHUTQIh6jbn8K0");
+      expect(premiumPlan?.priceId).toBe("price_1SVInaKHYuEw9LKlKEAg3pps");
     });
   });
 

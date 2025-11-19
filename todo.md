@@ -793,3 +793,44 @@
 - [x] Reiniciar servidor para aplicar mudanças
 - [ ] Salvar checkpoint
 
+
+
+
+### 34. Sistema Anti-Alucinação Robusto para Dietas (Novo)
+
+**Objetivo:** Implementar resolução inteligente de dietas usando IA com contrato rígido, evitando alucinações e permitindo reconhecimento de dietas reais não canônicas.
+
+#### Fase 1 - Interface e Função de Resolução
+- [x] Criar interface ResolvedDiet (status: canonical | recognized | unknown)
+- [x] Implementar função resolveDietWithLLM com JSON estrito
+- [x] Schema JSON com campos: is_known, normalized_label, rules
+- [x] Política anti-alucinação: só aceita se is_known = true
+- [x] Tentativa de mapeamento para dietas canônicas
+
+#### Fase 2 - Integração no generateMealPlan
+- [x] Adicionar variável resolvedDiet no início da função
+- [x] Chamar resolveDietWithLLM apenas se dieta não for canônica
+- [x] Mapear resultado para normalizedDietType se possível
+- [x] Manter compatibilidade com dietas canônicas (caminho rápido)
+
+#### Fase 3 - Atualização de Prompts
+- [x] Atualizar dietRule para suportar 3 casos (canônica, reconhecida, desconhecida)
+- [x] Adicionar regras da IA quando dieta for reconhecida
+- [x] Atualizar userPrompt com label correto da dieta
+- [x] Adicionar nota sobre ajustes em caso de conflito
+
+#### Fase 4 - Testes dos 3 Cenários
+- [x] Teste 1: dietType = "low carb" (deve cair em canônica)
+- [x] Teste 2: dietType = "DASH" (deve ser reconhecida pela IA)
+- [x] Teste 3: dietType = "monstro do lago ness" (deve retornar unknown)
+- [x] Validar logs de cada cenário
+- [x] Confirmar que plano não é distorcido quando unknown
+
+#### Fase 5 - Testes Unitários e Checkpoint
+- [x] Criar testes para resolveDietWithLLM
+- [x] Testar is_known = true e false
+- [x] Testar mapeamento para canônicas
+- [x] Testar dietas reconhecidas custom
+- [x] Salvar checkpoint com documentação completa
+
+

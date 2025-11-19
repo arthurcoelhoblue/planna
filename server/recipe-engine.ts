@@ -69,6 +69,167 @@ export interface MealPlan {
 }
 
 /**
+ * Tipos de dieta canônicos reconhecidos pelo sistema
+ */
+export type NormalizedDietType = 
+  | "low carb"
+  | "vegana"
+  | "vegetariana"
+  | "paleo"
+  | "cetogênica"
+  | "mediterrânea"
+  | "sem glúten"
+  | "sem lactose";
+
+/**
+ * Resultado da resolução de uma dieta informada pelo usuário
+ */
+export interface ResolvedDiet {
+  status: "canonical" | "recognized" | "unknown";
+  /** Nome normalizado de dieta canônica (low carb, vegana, etc.) */
+  canonicalName?: NormalizedDietType;
+  /** Nome livre da dieta, exatamente como o usuário ou o modelo descreveram */
+  label?: string;
+  /** Lista de regras/resumos da dieta, quando reconhecida via IA */
+  rules?: string[];
+}
+
+/**
+ * Normaliza um tipo de dieta informado pelo usuário para um dos tipos canônicos
+ * Retorna undefined se não reconhecer como dieta canônica
+ */
+function normalizeDietType(raw: string | undefined): NormalizedDietType | undefined {
+  if (!raw) return undefined;
+  
+  const normalized = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+  
+  // Mapeamento de variações para dietas canônicas
+  const mapping: Record<string, NormalizedDietType> = {
+    "low carb": "low carb",
+    "lowcarb": "low carb",
+    "low-carb": "low carb",
+    "baixo carboidrato": "low carb",
+    "vegana": "vegana",
+    "vegan": "vegana",
+    "vegetariana": "vegetariana",
+    "vegetarian": "vegetariana",
+    "paleo": "paleo",
+    "paleolitica": "paleo",
+    "cetogenica": "cetogênica",
+    "keto": "cetogênica",
+    "mediterranea": "mediterrânea",
+    "mediterranean": "mediterrânea",
+    "sem gluten": "sem glúten",
+    "gluten free": "sem glúten",
+    "sem lactose": "sem lactose",
+    "lactose free": "sem lactose",
+  };
+  
+  return mapping[normalized];
+}
+
+/**
+ * Usa IA para tentar reconhecer uma dieta não canônica.
+ * Só aceita se o modelo declarar explicitamente que é uma dieta conhecida
+ * e retornar regras claras. Caso contrário, retorna "unknown".
+ */
+async function resolveDietWithLLM(raw: string): Promise<ResolvedDiet> {
+  const input = raw.trim();
+  if (!input) {
+    return { status: "unknown" };
+  }
+
+  const response = await invokeLLM({
+    messages: [
+      {
+        role: "system",
+        content:
+          "Você é um nutricionista rigoroso. Sua tarefa é APENAS dizer se um nome é de uma dieta realmente conhecida e quais são as regras básicas dela. Se não tiver certeza, você deve responder que é desconhecida.",
+      },
+      {
+        role: "user",
+        content: `O usuário informou que segue a dieta: "${input}". 
+Sua tarefa:
+1. Dizer se essa é uma dieta reconhecida (ex.: low carb, mediterrânea, DASH, etc.) ou não.
+2. Se for reconhecida, listar 3–6 regras/resumos que definem essa dieta.
+3. Se você não tiver certeza, responda que é DESCONHECIDA.
+
+Responda SOMENTE no JSON com o formato especificado no schema.`,
+      },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "resolved_diet",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            is_known: { type: "boolean" },
+            normalized_label: { type: "string" },
+            rules: {
+              type: "array",
+              items: { type: "string" },
+            },
+          },
+          required: ["is_known"],
+          additionalProperties: false,
+        },
+      },
+    },
+  });
+
+  const message = response.choices[0]?.message;
+  if (!message?.content) {
+    return { status: "unknown" };
+  }
+
+  const content =
+    typeof message.content === "string"
+      ? message.content
+      : JSON.stringify(message.content);
+
+  try {
+    const parsed = JSON.parse(content) as {
+      is_known: boolean;
+      normalized_label?: string;
+      rules?: string[];
+    };
+
+    if (!parsed.is_known) {
+      return { status: "unknown" };
+    }
+
+    const label = (parsed.normalized_label || input).trim();
+
+    // Tenta mapear o nome reconhecido de volta para uma das dietas canônicas
+    const maybeCanonical = normalizeDietType(label);
+
+    if (maybeCanonical) {
+      return {
+        status: "canonical",
+        canonicalName: maybeCanonical,
+        label,
+        rules: parsed.rules,
+      };
+    }
+
+    return {
+      status: "recognized",
+      label,
+      rules: parsed.rules || [],
+    };
+  } catch (err) {
+    console.error("[Diet] Falha ao parsear resposta da IA:", err);
+    return { status: "unknown" };
+  }
+}
+
+/**
  * Normaliza nome de ingrediente para comparação case-insensitive e sem acentos
  */
 function normalizeName(name: string): string {
@@ -338,9 +499,27 @@ export async function generateMealPlan(params: {
     ? `LIMITE CALÓRICO: Cada porção deve ter NO MÁXIMO ${calorieLimit} kcal. Ajuste as quantidades de ingredientes para respeitar este limite. Calcule e informe as calorias de cada receita e por porção.`
     : "";
 
-  const dietRule = dietType
-    ? `DIETA ESPECIAL: O usuário segue a dieta "${dietType}". RESPEITE RIGOROSAMENTE as restrições alimentares desta dieta. Use APENAS ingredientes permitidos.`
-    : "";
+  // Resolução de dieta com anti-alucinação
+  let normalizedDietType = normalizeDietType(dietType);
+  let resolvedDiet: ResolvedDiet | undefined;
+
+  // Se não caiu em uma dieta canônica, tenta resolver com IA
+  if (!normalizedDietType && dietType) {
+    resolvedDiet = await resolveDietWithLLM(dietType);
+    if (resolvedDiet.status === "canonical" && resolvedDiet.canonicalName) {
+      normalizedDietType = resolvedDiet.canonicalName;
+    }
+  }
+
+  // Monta dietRule baseado na resolução
+  let dietRule = "";
+
+  if (normalizedDietType) {
+    dietRule = `DIETA ESPECIAL: O usuário segue a dieta "${normalizedDietType}". RESPEITE RIGOROSAMENTE as restrições alimentares desta dieta. Use APENAS ingredientes permitidos.`;
+  } else if (resolvedDiet?.status === "recognized" && resolvedDiet.label) {
+    const rulesText = (resolvedDiet.rules || []).join("; ");
+    dietRule = `DIETA ESPECIAL: O usuário segue a dieta "${resolvedDiet.label}". Trate esta dieta como um padrão conhecido com as seguintes diretrizes: ${rulesText}. RESPEITE essas restrições com rigor. Se houver conflito com ingredientes disponíveis, ajuste o plano e mencione isso em note/adjustmentReason.`;
+  }
 
   // Regra de estoque (se houver quantidades definidas)
   const stockRule = stockLimits.length > 0
@@ -439,7 +618,13 @@ Número de marmitas: ${servings}
 Exclusões: ${exclusions.length > 0 ? exclusions.join(", ") : "nenhuma"}
 Objetivo: ${objective}
 ${calorieLimit ? `Limite calórico por porção: ${calorieLimit} kcal` : ""}
-${dietType ? `Dieta: ${dietType}` : ""}
+${
+  normalizedDietType
+    ? `Dieta: ${normalizedDietType}`
+    : resolvedDiet?.status === "recognized" && resolvedDiet.label
+    ? `Dieta: ${resolvedDiet.label}`
+    : ""
+}
 
 Gere o plano completo em JSON com informações nutricionais detalhadas.`;
 
