@@ -10,6 +10,7 @@ export type SubscriptionTier = "free" | "pro" | "premium";
  */
 const VIP_EMAILS = [
   "arthurcsantos@gmail.com",
+  "arthur@tokeniza.com.br",
   // Adicione mais emails VIP aqui se necessário
 ];
 

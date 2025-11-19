@@ -7,12 +7,18 @@ describe("VIP System", () => {
       expect(isVIPEmail("arthurcsantos@gmail.com")).toBe(true);
     });
 
+    it("should recognize second VIP email (lowercase)", () => {
+      expect(isVIPEmail("arthur@tokeniza.com.br")).toBe(true);
+    });
+
     it("should recognize VIP email (uppercase)", () => {
       expect(isVIPEmail("ARTHURCSANTOS@GMAIL.COM")).toBe(true);
+      expect(isVIPEmail("ARTHUR@TOKENIZA.COM.BR")).toBe(true);
     });
 
     it("should recognize VIP email (mixed case)", () => {
       expect(isVIPEmail("ArthurCSantos@Gmail.com")).toBe(true);
+      expect(isVIPEmail("Arthur@Tokeniza.Com.Br")).toBe(true);
     });
 
     it("should reject non-VIP email", () => {

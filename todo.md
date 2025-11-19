@@ -586,3 +586,11 @@
 - [x] Identificar problema: Price IDs são placeholders (STRIPE_PRICE_ID_PRO/PREMIUM não configurados)
 - [x] Documentar solução: Criar produtos no Stripe Dashboard e configurar variáveis de ambiente
 
+
+
+### 27. Adicionar arthur@tokeniza.com.br à lista VIP
+
+- [x] Adicionar arthur@tokeniza.com.br ao array VIP_EMAILS em server/paywall.ts
+- [x] Executar testes para validar que ambos os emails são reconhecidos como VIP
+- [x] Salvar checkpoint
+
