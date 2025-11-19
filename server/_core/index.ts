@@ -38,6 +38,17 @@ async function startServer() {
     return handleStripeWebhook(req, res);
   });
   
+  // Endpoint GET para testar se o webhook está acessível
+  app.get("/api/stripe/webhook", (req, res) => {
+    res.json({
+      status: "ok",
+      message: "Stripe webhook endpoint is active",
+      method: "POST",
+      url: "/api/stripe/webhook",
+      note: "This endpoint only accepts POST requests from Stripe"
+    });
+  });
+  
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

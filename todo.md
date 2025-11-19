@@ -615,3 +615,13 @@
 - [x] Validar segurança e comprimento mínimo
 - [x] Salvar checkpoint
 
+
+
+### 30. Corrigir Erro 404 no Webhook Endpoint
+
+- [x] Investigar causa do erro 404 (endpoint só aceita POST, navegador faz GET)
+- [x] Adicionar endpoint GET para teste e validação
+- [x] Testar endpoint localmente (retorna status ok)
+- [x] Webhook POST continua funcionando normalmente
+- [x] Salvar checkpoint
+
