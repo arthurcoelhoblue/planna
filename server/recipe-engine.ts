@@ -241,6 +241,66 @@ function normalizeName(name: string): string {
 }
 
 /**
+ * Regras fixas de dietas canônicas (anti-alucinação)
+ */
+const DIET_RULES: Record<
+  NormalizedDietType,
+  { forbidden: string[]; notes?: string }
+> = {
+  "low carb": {
+    forbidden: [
+      "arroz",
+      "arroz branco",
+      "batata",
+      "batata inglesa",
+      "massa",
+      "macarrão",
+      "pão",
+      "farinha",
+      "açúcar",
+      "doces",
+    ],
+    notes: "Low carb evita carboidratos simples e amidos.",
+  },
+  vegana: {
+    forbidden: ["carne", "frango", "peixe", "ovo", "leite", "laticínios", "manteiga", "mel"],
+    notes: "Veganos não consomem nenhum ingrediente de origem animal.",
+  },
+  vegetariana: {
+    forbidden: ["carne", "frango", "peixe"],
+    notes: "Vegetarianos evitam carnes, mas aceitam laticínios e ovos.",
+  },
+  cetogênica: {
+    forbidden: [
+      "arroz",
+      "batata",
+      "mandioca",
+      "pão",
+      "açúcar",
+      "macarrão",
+      "frutas ricas em açúcar"
+    ],
+    notes: "Cetogênica é muito baixa em carboidratos e rica em gordura.",
+  },
+  mediterrânea: {
+    forbidden: ["ultraprocessado", "industrializado"],
+    notes: "Mediterrânea evita alimentos ultraprocessados.",
+  },
+  paleo: {
+    forbidden: ["grãos", "laticínios", "leguminosas", "açúcar", "processados"],
+    notes: "Paleo evita alimentos não disponíveis no paleolítico.",
+  },
+  "sem glúten": {
+    forbidden: ["trigo", "cevada", "centeio", "pão", "massa", "macarrão"],
+    notes: "Sem glúten evita cereais que contêm glúten.",
+  },
+  "sem lactose": {
+    forbidden: ["leite", "queijo", "iogurte", "manteiga", "creme de leite", "laticínios"],
+    notes: "Sem lactose evita produtos lácteos.",
+  },
+};
+
+/**
  * Sanitiza o plano gerado pela IA, removendo ingredientes não permitidos
  * quando allowNewIngredients = false
  */
@@ -300,6 +360,108 @@ function sanitizePlanIngredients(
     dishes: sanitizedDishes,
     shoppingList: sanitizedShoppingList,
   };
+}
+
+/**
+ * Sanitiza o plano final considerando dieta, exclusões e allowNewIngredients.
+ * Remove ingredientes proibidos, ajusta receitas e registra razões.
+ */
+function sanitizePlanDietsAndExclusions(
+  plan: MealPlan,
+  params: {
+    dietType?: NormalizedDietType;
+    resolvedDiet?: ResolvedDiet;
+    exclusions: string[];
+    allowNewIngredients: boolean;
+    availableIngredients: string[]; // nomes normalizados vindos do usuário
+  }
+): MealPlan {
+  const { dietType, resolvedDiet, exclusions, allowNewIngredients, availableIngredients } = params;
+
+  const normalizedAvailable = new Set(availableIngredients.map(normalizeName));
+  const bannedByUser = new Set(exclusions.map(normalizeName));
+
+  // Ingredientes proibidos pela dieta
+  const dietForbidden = new Set<string>();
+
+  if (dietType && DIET_RULES[dietType]) {
+    DIET_RULES[dietType].forbidden.forEach((item) =>
+      dietForbidden.add(normalizeName(item))
+    );
+  }
+
+  // Dietas reconhecidas via IA (não canônicas)
+  if (resolvedDiet?.status === "recognized" && resolvedDiet.rules) {
+    resolvedDiet.rules.forEach((r) => {
+      const tokens = r.split(/[ ,;-]/).map((t) => normalizeName(t));
+      tokens.forEach((t) => {
+        if (t.length > 2) dietForbidden.add(t);
+      });
+    });
+  }
+
+  const adjustments: string[] = [];
+
+  // Sanitização dos pratos
+  const cleanedDishes = plan.dishes
+    .map((dish) => {
+      const newIngredients = dish.ingredients.filter((ing) => {
+        const key = normalizeName(ing.name);
+
+        // Exclusões do usuário
+        if (bannedByUser.has(key)) {
+          adjustments.push(`Ingrediente removido por exclusão: ${ing.name}`);
+          return false;
+        }
+
+        // Dieta
+        if (dietForbidden.has(key)) {
+          adjustments.push(`Ingrediente proibido pela dieta removido: ${ing.name}`);
+          return false;
+        }
+
+        // allowNewIngredients false → só aceita ingredientes disponíveis
+        if (!allowNewIngredients && !normalizedAvailable.has(key)) {
+          adjustments.push(`Ingrediente não permitido removido: ${ing.name}`);
+          return false;
+        }
+
+        return true;
+      });
+
+      if (newIngredients.length === 0) {
+        adjustments.push(`Receita removida por não conter ingredientes válidos: ${dish.name}`);
+        return null;
+      }
+
+      return { ...dish, ingredients: newIngredients };
+    })
+    .filter(Boolean) as Dish[];
+
+  // Sanitização da lista de compras
+  const cleanedShopping = plan.shoppingList.filter((item) => {
+    const key = normalizeName(item.item);
+
+    if (bannedByUser.has(key)) return false;
+    if (dietForbidden.has(key)) return false;
+    if (!allowNewIngredients && !normalizedAvailable.has(key)) return false;
+
+    return true;
+  });
+
+  const newPlan = {
+    ...plan,
+    dishes: cleanedDishes,
+    shoppingList: cleanedShopping,
+  };
+
+  if (adjustments.length > 0) {
+    newPlan.adjustmentReason = 
+      (plan.adjustmentReason ? plan.adjustmentReason + " " : "") +
+      adjustments.join(" ");
+  }
+
+  return newPlan;
 }
 
 /**
@@ -743,8 +905,17 @@ Gere o plano completo em JSON com informações nutricionais detalhadas.`;
       allowNewIngredients
     );
     
+    // Sanitização pós-IA (dieta + exclusões + allowNewIngredients)
+    const dietSanitizedPlan = sanitizePlanDietsAndExclusions(sanitizedPlan, {
+      dietType: normalizedDietType,
+      resolvedDiet,
+      exclusions,
+      allowNewIngredients,
+      availableIngredients,
+    });
+    
     // Enforcement rigoroso de misturas e porções
-    const enforcedPlan = enforceVarietiesAndServings(sanitizedPlan, numDishes, servings);
+    const enforcedPlan = enforceVarietiesAndServings(dietSanitizedPlan, numDishes, servings);
     
     // Pós-processamento: calcular tempo total e verificar se cabe no tempo disponível
     const finalPlan = calculateTimeMetrics(enforcedPlan, availableTime);

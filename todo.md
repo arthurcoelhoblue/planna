@@ -834,3 +834,40 @@
 - [x] Salvar checkpoint com documentação completa
 
 
+
+
+
+### 35. Sanitização Pós-IA (Dieta + Exclusões + allowNewIngredients)
+
+**Objetivo:** Implementar camada de sanitização pós-IA que remove ingredientes proibidos por dieta, exclusões do usuário e respeita allowNewIngredients.
+
+#### Fase 1 - Regras de Dieta Canônicas
+- [x] Adicionar constante DIET_RULES com ingredientes proibidos por dieta
+- [x] Mapear dietas: low carb, vegana, vegetariana, cetogênica, mediterrânea, paleo, sem glúten, sem lactose
+- [x] Incluir notas explicativas para cada dieta
+
+#### Fase 2 - Função de Sanitização
+- [x] Implementar sanitizePlanDietsAndExclusions()
+- [x] Filtrar ingredientes por exclusões do usuário
+- [x] Filtrar ingredientes proibidos pela dieta
+- [x] Respeitar allowNewIngredients
+- [x] Remover receitas que ficaram sem ingredientes
+- [x] Registrar ajustes em adjustmentReason
+
+#### Fase 3 - Integração na Pipeline
+- [x] Adicionar sanitização após sanitizePlanIngredients
+- [x] Passar parâmetros corretos (dietType, resolvedDiet, exclusions)
+- [x] Ajustar enforcedPlan para usar dietSanitizedPlan
+
+#### Fase 4 - Testes
+- [x] Testar sanitização com dieta low carb
+- [x] Testar sanitização com exclusões
+- [x] Testar sanitização com allowNewIngredients = false
+- [x] Validar remoção de receitas inválidas
+- [x] 33 testes unitários criados (100% passando)
+
+#### Fase 5 - Checkpoint
+- [x] Atualizar todo.md
+- [x] Salvar checkpoint com documentação
+
+
