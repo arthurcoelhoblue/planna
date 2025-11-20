@@ -145,6 +145,11 @@ export default function PlanView() {
   const shoppingList = typeof plan.shoppingList === 'string' ? JSON.parse(plan.shoppingList) : plan.shoppingList;
   const prepSchedule = typeof plan.prepSchedule === 'string' ? JSON.parse(plan.prepSchedule) : plan.prepSchedule;
   
+  // Parse dos novos campos JSON (estoque e substituições)
+  const usedStock = plan.usedStock ? (typeof plan.usedStock === 'string' ? JSON.parse(plan.usedStock) : plan.usedStock) : null;
+  const remainingStock = plan.remainingStock ? (typeof plan.remainingStock === 'string' ? JSON.parse(plan.remainingStock) : plan.remainingStock) : null;
+  const substitutions = plan.substitutions ? (typeof plan.substitutions === 'string' ? JSON.parse(plan.substitutions) : plan.substitutions) : null;
+  
   // Dados nutricionais (podem não existir em planos antigos)
   const planData = {
     totalKcal: plan.totalKcal,
@@ -336,6 +341,54 @@ export default function PlanView() {
               <p className="text-sm text-gray-600">
                 Plano gerado conforme solicitado, sem ajustes automáticos.
               </p>
+            </div>
+          )}
+
+          {/* ESTOQUE UTILIZADO */}
+          {usedStock && Object.keys(usedStock).length > 0 && (
+            <div className="border rounded-xl bg-blue-50 border-blue-300 p-4 mt-6">
+              <h2 className="text-lg font-semibold text-blue-700 mb-2">
+                📦 Estoque utilizado
+              </h2>
+              <ul className="text-sm text-blue-900 space-y-1">
+                {Object.entries(usedStock).map(([item, qtd]) => (
+                  <li key={item}>
+                    <span className="font-medium">{item}:</span> {String(qtd)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* ESTOQUE REMANESCENTE */}
+          {remainingStock && Object.keys(remainingStock).length > 0 && (
+            <div className="border rounded-xl bg-green-50 border-green-300 p-4 mt-4">
+              <h2 className="text-lg font-semibold text-green-700 mb-2">
+                🟢 Estoque remanescente
+              </h2>
+              <ul className="text-sm text-green-900 space-y-1">
+                {Object.entries(remainingStock).map(([item, qtd]) => (
+                  <li key={item}>
+                    <span className="font-medium">{item}:</span> {String(qtd)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* SUBSTITUIÇÕES */}
+          {substitutions && substitutions.length > 0 && (
+            <div className="border rounded-xl bg-orange-50 border-orange-300 p-4 mt-4">
+              <h2 className="text-lg font-semibold text-orange-700 mb-2">
+                🔁 Substituições automáticas
+              </h2>
+              <ul className="text-sm text-orange-900 space-y-1">
+                {substitutions.map((sub: any, idx: number) => (
+                  <li key={idx}>
+                    <span className="font-medium">{sub.original}</span> → {sub.replacement}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

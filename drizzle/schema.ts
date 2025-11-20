@@ -90,6 +90,9 @@ export const plans = mysqlTable("plans", {
   requestedVarieties: int("requestedVarieties"), // Number of varieties (misturas) requested by user
   requestedServings: int("requestedServings"), // Number of servings requested by user
   adjustmentReason: text("adjustmentReason"), // Explanation when system couldn't fulfill exact request
+  usedStock: text("usedStock"), // JSON object with used stock quantities {"frango": "800g", "arroz": "200g"}
+  remainingStock: text("remainingStock"), // JSON object with remaining stock quantities
+  substitutions: text("substitutions"), // JSON array of substitutions [{original: "X", replacement: "Y"}]
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

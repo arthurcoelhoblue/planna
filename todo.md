@@ -1149,3 +1149,17 @@
 - [x] Testar com adjustmentReason preenchido (card amarelo)
 - [x] Validar posicionamento entre Resumo e Parâmetros
 
+
+
+
+### 29. Cards de Estoque e Substituições no PlanView (PATCH 5.3)
+- [x] Adicionar card "Estoque Utilizado" (azul) após Ajustes Automáticos
+- [x] Adicionar card "Estoque Remanescente" (verde) após Estoque Utilizado
+- [x] Adicionar card "Substituições Automáticas" (laranja) após Estoque Remanescente
+- [x] Cards só aparecem se dados existirem (condicional)
+- [x] Adicionar campos usedStock, remainingStock, substitutions no schema
+- [x] Aplicar migração no banco de dados
+- [x] Testar geração de plano com estoque (800g frango, 200g arroz, 300g batata)
+- [x] Validar renderização condicional (cards não aparecem quando NULL)
+- [x] Reportar resultados ao usuário
+
