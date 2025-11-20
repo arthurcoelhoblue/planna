@@ -507,6 +507,13 @@ export const appRouter = router({
           ...(userPref?.exclusions ? JSON.parse(userPref.exclusions) : []),
         ];
 
+        // Deriva parâmetros "canônicos" usados pelo motor e que vamos persistir
+        const resolvedSkillLevel =
+          input.skillLevel || userPref?.skillLevel || "intermediate";
+
+        const resolvedDietType =
+          input.dietType || userPref?.dietType || undefined;
+
         // Paywall: verificar limite mensal
         const { hasReachedMonthlyLimit } = await import("./paywall");
         const tier = ctx.user.subscriptionTier || "free";
@@ -518,7 +525,7 @@ export const appRouter = router({
           );
         }
 
-        // Generate plan
+        // Generate plan com contrato unificado
         const plan = await generateMealPlan({
           availableIngredients,
           servings: input.servings,
@@ -527,9 +534,9 @@ export const appRouter = router({
           varieties: input.varieties,
           allowNewIngredients: input.allowNewIngredients,
           sophistication: input.sophistication,
-          skillLevel: userPref?.skillLevel || "intermediate",
+          skillLevel: resolvedSkillLevel,
           calorieLimit: input.calorieLimit,
-          dietType: userPref?.dietType || undefined,
+          dietType: resolvedDietType,
           userFavorites,
           userDislikes,
           availableTime: input.availableTime,
@@ -544,20 +551,39 @@ export const appRouter = router({
           exclusions: JSON.stringify(input.exclusions || []),
         });
 
-        // Save plan
+        // Save plan — agora persistindo TUDO que o front já espera
         const planId = await createPlan({
           sessionId,
           dishes: JSON.stringify(plan.dishes),
           shoppingList: JSON.stringify(plan.shoppingList),
           prepSchedule: JSON.stringify(plan.prepSchedule),
+
+          // Nutrição
           totalKcal: plan.totalKcal ? Math.round(plan.totalKcal) : undefined,
-          avgKcalPerServing: plan.avgKcalPerServing ? Math.round(plan.avgKcalPerServing) : undefined,
-          requestedVarieties: input.varieties,
-          requestedServings: input.servings,
-          adjustmentReason: plan.adjustmentReason,
-          availableTime: plan.availableTime,
+          avgKcalPerServing: plan.avgKcalPerServing
+            ? Math.round(plan.avgKcalPerServing)
+            : undefined,
+
+          // Metadados de configuração do usuário
+          dietType: resolvedDietType,
+          mode: input.objective || "normal",
+          skillLevel: resolvedSkillLevel,
+          allowNewIngredients:
+            input.allowNewIngredients ?? true,
+          maxKcalPerServing:
+            input.calorieLimit ?? undefined,
+
+          // Tempo
+          availableTime: plan.availableTime ?? input.availableTime ?? undefined,
           totalPlanTime: plan.totalPlanTime,
           timeFits: plan.timeFits,
+
+          // Variedades / porções
+          requestedVarieties: input.varieties,
+          requestedServings: input.servings,
+
+          // Ajustes do motor
+          adjustmentReason: plan.adjustmentReason,
         });
 
         return {

@@ -1023,3 +1023,28 @@
 - [x] Validar que login está funcionando (autenticado como Arthur Coelho)
 - [x] Salvar checkpoint
 
+
+
+
+### 41. PATCH 5.1 - Unificação TRPC + Persistência Completa do Plano
+
+**Objetivo:** Corrigir backend para persistir TODOS os campos que o PlanView já está pronto para mostrar (dietType, mode, skillLevel, allowNewIngredients, maxKcalPerServing).
+
+**Problema Atual:** PlanView tem badges prontos mas backend não persiste os dados, resultando em "Não especificada" / badges invisíveis.
+
+- [x] Aplicar PATCH 5.1 em server/routers.ts (mealPlan.generate)
+- [x] Adicionar resolvedSkillLevel e resolvedDietType com fallback para preferências
+- [x] Persistir dietType, mode, skillLevel, allowNewIngredients, maxKcalPerServing em createPlan
+- [x] Gerar plano 1: modo normal, sem dieta, sem limite calórico
+- [x] Gerar plano 2: aproveitamento, com dieta Low Carb, limite 500 kcal, allowNewIngredients=false
+- [x] Validar badges no PlanView de ambos os planos
+- [x] Reportar quais badges apareceram/não apareceram
+- [x] Salvar checkpoint
+
+**Resultados:**
+- ✅ Plano 1: Badges "Dieta: Não especificada", "Modo: Normal", "Nível: Intermediário", "Novos ingredientes: Não"
+- ✅ Plano 2: Badges "Dieta: Low Carb", "Modo: Aproveitamento total", "Nível: Intermediário", "Limite: 500 kcal/porção"
+- ✅ resolvedDietType funcionando perfeitamente
+- ✅ resolvedSkillLevel funcionando perfeitamente
+- ✅ Todos os campos sendo persistidos corretamente
+
