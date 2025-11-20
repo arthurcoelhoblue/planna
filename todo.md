@@ -935,3 +935,33 @@
 - [x] Atualizar todo.md
 - [x] Salvar checkpoint
 
+
+
+
+### 38. Patch 4.4 - Sincronização de Porções, Nutrição e Tempo
+
+**Objetivo:** Sincronizar porções, calorias e tempo após ajustes de misturas e porções, eliminando inconsistências.
+
+#### Fase 1 - Reescrita de enforceVarietiesAndServings
+- [x] Adicionar função recomputeDishCalories
+- [x] Recalcular totalKcal por receita após ajuste de porções
+- [x] Recalcular kcalPerServing com base em servings atualizados
+- [x] Recalcular plan.totalKcal e plan.avgKcalPerServing
+- [x] Preservar e concatenar adjustmentReason corretamente
+
+#### Fase 2 - Upgrade de calculateTimeMetrics
+- [x] Adicionar aviso em adjustmentReason quando plano não cabe no tempo
+- [x] Manter timeFits funcionando como antes
+- [x] Registrar conflito de tempo em adjustmentReason
+
+#### Fase 3 - Testes
+- [x] Testar aumento de porções (20 porções, 3 misturas)
+- [x] Testar redução de variedades (IA gera 5, pede 3)
+- [x] Testar tempo disponível apertado (1h, plano 120min)
+- [x] Testar preservação de adjustmentReason
+- [x] 4 testes unitários criados (100% passando)
+
+#### Fase 4 - Checkpoint
+- [x] Atualizar todo.md
+- [x] Salvar checkpoint
+

@@ -470,7 +470,7 @@ function sanitizePlanDietsAndExclusions(
 function calculateTimeMetrics(plan: MealPlan, availableTime?: number): MealPlan {
   // Usa o totalPrepTime que já foi calculado pela IA (considera tarefas paralelas)
   const totalPlanTime = plan.totalPrepTime;
-  
+
   // Se não há tempo disponível informado, retorna apenas com o tempo total
   if (!availableTime) {
     return {
@@ -478,107 +478,214 @@ function calculateTimeMetrics(plan: MealPlan, availableTime?: number): MealPlan 
       totalPlanTime,
     };
   }
-  
+
   // Converte tempo disponível de horas para minutos e aplica margem de 100%
   // (margem maior porque a IA tende a ser otimista com paralelismo)
-  const maxAllowedTime = availableTime * 60 * 2;
-  
+  const rawAvailableMinutes = availableTime * 60;
+  const maxAllowedTime = rawAvailableMinutes * 2;
+
   // Verifica se o plano cabe no tempo (com margem de 100%)
   const timeFits = totalPlanTime <= maxAllowedTime;
-  
-  console.log(`[Time Metrics] totalPrepTime: ${totalPlanTime}min, availableTime: ${availableTime}h (${availableTime * 60}min), maxAllowed (with 100% margin): ${maxAllowedTime}min, timeFits: ${timeFits}`);
-  
+
+  console.log(
+    `[Time Metrics] totalPrepTime: ${totalPlanTime}min, availableTime: ${availableTime}h (${rawAvailableMinutes}min), maxAllowed (with 100% margin): ${maxAllowedTime}min, timeFits: ${timeFits}`,
+  );
+
+  // Anexa explicação ao adjustmentReason quando o plano provavelmente não cabe no tempo
+  let adjustmentReason = plan.adjustmentReason;
+  if (!timeFits) {
+    const msg = `O plano estimado (${totalPlanTime} minutos) provavelmente não cabe no tempo disponível informado (${rawAvailableMinutes} minutos), mesmo considerando uma margem de segurança.`;
+    adjustmentReason = adjustmentReason
+      ? `${adjustmentReason} ${msg}`
+      : msg;
+  }
+
   return {
     ...plan,
     totalPlanTime,
     timeFits,
     availableTime,
+    ...(adjustmentReason ? { adjustmentReason } : {}),
+  };
+}
+
+/**
+ * Recalcula calorias de uma receita com base nos ingredientes e porções.
+ * Se totalKcal estiver ausente, tenta somar kcal dos ingredientes.
+ * Se totalKcal existir, recalcula kcalPerServing de acordo com servings.
+ */
+function recomputeDishCalories(dish: Dish): Dish {
+  let totalKcal = dish.totalKcal;
+
+  // Se a IA não preencheu totalKcal, tenta calcular a partir dos ingredientes
+  if (totalKcal === undefined) {
+    const ingredientKcals = dish.ingredients
+      .map((ing) => ing.kcal)
+      .filter(
+        (k): k is number => typeof k === "number" && Number.isFinite(k),
+      );
+
+    if (ingredientKcals.length > 0) {
+      totalKcal = ingredientKcals.reduce((sum, k) => sum + k, 0);
+    }
+  }
+
+  let kcalPerServing = dish.kcalPerServing;
+
+  // Se temos totalKcal e servings > 0, recalcula kcal por porção
+  if (totalKcal !== undefined && dish.servings > 0) {
+    kcalPerServing = totalKcal / dish.servings;
+  }
+
+  return {
+    ...dish,
+    ...(totalKcal !== undefined ? { totalKcal } : {}),
+    ...(kcalPerServing !== undefined ? { kcalPerServing } : {}),
   };
 }
 
 /**
  * Garante que o plano respeita rigorosamente o número de misturas e porções solicitadas
+ * e recalibra as informações nutricionais do plano.
  */
 function enforceVarietiesAndServings(
   plan: MealPlan,
   requestedVarieties: number,
-  requestedServings: number
+  requestedServings: number,
 ): MealPlan {
-  const adjustments: string[] = [];
+  const extraAdjustments: string[] = [];
   let dishes = [...plan.dishes];
-  
+
   // 1. ENFORCEMENT DE MISTURAS (VARIEDADES)
-  if (dishes.length < requestedVarieties) {
-    console.log(`[Enforcement] IA gerou ${dishes.length} receitas, mas foram pedidas ${requestedVarieties}. Gerando receitas extras...`);
-    adjustments.push(`O sistema gerou ${dishes.length} misturas inicialmente e criou ${requestedVarieties - dishes.length} variações adicionais para atingir as ${requestedVarieties} misturas solicitadas.`);
-    
+  if (dishes.length < requestedVarieties && dishes.length > 0) {
+    console.log(
+      `[Enforcement] IA gerou ${dishes.length} receitas, mas foram pedidas ${requestedVarieties}. Gerando receitas extras...`,
+    );
+    extraAdjustments.push(
+      `O sistema gerou ${dishes.length} misturas inicialmente e criou ${
+        requestedVarieties - dishes.length
+      } variações adicionais para atingir as ${requestedVarieties} misturas solicitadas.`,
+    );
+
     // Gerar receitas extras duplicando as existentes com variações
     const missingCount = requestedVarieties - dishes.length;
     for (let i = 0; i < missingCount; i++) {
       const baseDish = dishes[i % dishes.length];
       const variation = baseDish.variations?.[0] || "tempero diferente";
-      
+
       const newDish: Dish = {
         ...baseDish,
         name: `${baseDish.name} - Variação ${i + 1}`,
         servings: 0, // Será ajustado no próximo passo
+        // Remove a variação usada para evitar repetição infinita
         variations: baseDish.variations?.slice(1) || [],
       };
-      
+
       dishes.push(newDish);
-      console.log(`[Enforcement] Receita extra criada: "${newDish.name}" baseada em "${baseDish.name}"`);
+      console.log(
+        `[Enforcement] Receita extra criada: "${newDish.name}" baseada em "${baseDish.name}" (${variation})`,
+      );
     }
   } else if (dishes.length > requestedVarieties) {
-    console.log(`[Enforcement] IA gerou ${dishes.length} receitas, mas foram pedidas ${requestedVarieties}. Removendo excesso...`);
-    adjustments.push(`O sistema gerou ${dishes.length} misturas mas você pediu ${requestedVarieties}, então removemos o excesso.`);
+    console.log(
+      `[Enforcement] IA gerou ${dishes.length} receitas, mas foram pedidas ${requestedVarieties}. Removendo excesso...`,
+    );
+    extraAdjustments.push(
+      `O sistema gerou ${dishes.length} misturas mas você pediu ${requestedVarieties}, então removemos o excesso.`,
+    );
     dishes = dishes.slice(0, requestedVarieties);
   }
-  
+
   // 2. ENFORCEMENT DE PORÇÕES
-  const currentTotalServings = dishes.reduce((sum, dish) => sum + dish.servings, 0);
-  
-  if (currentTotalServings < requestedServings) {
-    console.log(`[Enforcement] Total de porções atual: ${currentTotalServings}, pedido: ${requestedServings}. Ajustando...`);
-    adjustments.push(`O sistema ajustou a distribuição de porções para atingir as ${requestedServings} porções solicitadas.`);
-    
-    // Distribuir porções faltantes entre as receitas
-    const servingsPerDish = Math.floor(requestedServings / dishes.length);
-    const remainder = requestedServings % dishes.length;
-    
-    dishes = dishes.map((dish, index) => ({
-      ...dish,
-      servings: servingsPerDish + (index < remainder ? 1 : 0),
-    }));
-    
-    const newTotal = dishes.reduce((sum, dish) => sum + dish.servings, 0);
-    console.log(`[Enforcement] Porções ajustadas. Novo total: ${newTotal}`);
-  } else if (currentTotalServings > requestedServings) {
-    // Permitir arredondamento para cima (até +2 porções)
-    const diff = currentTotalServings - requestedServings;
-    if (diff > 2) {
-      console.log(`[Enforcement] Total de porções muito alto: ${currentTotalServings}, pedido: ${requestedServings}. Reduzindo...`);
-      
-      // Redistribuir porções para atingir o solicitado
+  const currentTotalServings = dishes.reduce(
+    (sum, dish) => sum + (dish.servings || 0),
+    0,
+  );
+
+  if (requestedServings > 0 && dishes.length > 0) {
+    if (currentTotalServings < requestedServings) {
+      console.log(
+        `[Enforcement] Total de porções atual: ${currentTotalServings}, pedido: ${requestedServings}. Ajustando...`,
+      );
+      extraAdjustments.push(
+        `O sistema ajustou a distribuição de porções para atingir as ${requestedServings} porções solicitadas.`,
+      );
+
+      // Distribuir porções faltantes entre as receitas
       const servingsPerDish = Math.floor(requestedServings / dishes.length);
       const remainder = requestedServings % dishes.length;
-      
+
       dishes = dishes.map((dish, index) => ({
         ...dish,
         servings: servingsPerDish + (index < remainder ? 1 : 0),
       }));
-    } else {
-      console.log(`[Enforcement] Total de porções: ${currentTotalServings} (arredondamento aceitável para ${requestedServings})`);
+
+      const newTotal = dishes.reduce(
+        (sum, dish) => sum + (dish.servings || 0),
+        0,
+      );
+      console.log(
+        `[Enforcement] Porções ajustadas. Novo total de porções: ${newTotal}`,
+      );
+    } else if (currentTotalServings > requestedServings) {
+      // Permitir arredondamento para cima (até +2 porções)
+      const diff = currentTotalServings - requestedServings;
+      if (diff > 2) {
+        console.log(
+          `[Enforcement] Total de porções muito alto: ${currentTotalServings}, pedido: ${requestedServings}. Reduzindo...`,
+        );
+
+        const servingsPerDish = Math.floor(requestedServings / dishes.length);
+        const remainder = requestedServings % dishes.length;
+
+        dishes = dishes.map((dish, index) => ({
+          ...dish,
+          servings: servingsPerDish + (index < remainder ? 1 : 0),
+        }));
+
+        const newTotal = dishes.reduce(
+          (sum, dish) => sum + (dish.servings || 0),
+          0,
+        );
+        console.log(
+          `[Enforcement] Porções ajustadas para baixo. Novo total: ${newTotal}`,
+        );
+        extraAdjustments.push(
+          `Reduzimos o total de porções para ficar alinhado às ${requestedServings} porções solicitadas.`,
+        );
+      } else {
+        console.log(
+          `[Enforcement] Total de porções: ${currentTotalServings} (arredondamento aceitável para ${requestedServings}).`,
+        );
+      }
     }
   }
-  
-  const adjustmentReason = adjustments.length > 0 
-    ? adjustments.join(" ") 
-    : undefined;
+
+  // 3. Recalibrar calorias por receita após ajuste de porções
+  const recalculatedDishes = dishes.map(recomputeDishCalories);
+
+  // 4. Recalcular calorias totais do plano e média por porção
+  const totalKcal = recalculatedDishes.reduce(
+    (sum, dish) => sum + (dish.totalKcal || 0),
+    0,
+  );
+  const avgKcalPerServing =
+    requestedServings > 0 ? totalKcal / requestedServings : undefined;
+
+  // 5. Combinar adjustmentReason pré-existente com os ajustes desta função
+  const mergedAdjustmentReason = [
+    plan.adjustmentReason,
+    extraAdjustments.length > 0 ? extraAdjustments.join(" ") : undefined,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return {
     ...plan,
-    dishes,
-    adjustmentReason,
+    dishes: recalculatedDishes,
+    totalKcal: totalKcal || undefined,
+    avgKcalPerServing: avgKcalPerServing || undefined,
+    adjustmentReason: mergedAdjustmentReason || undefined,
   };
 }
 
