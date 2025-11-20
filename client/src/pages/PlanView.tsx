@@ -313,16 +313,30 @@ export default function PlanView() {
                   )}
                 </div>
                 
-                {/* Mensagem de Ajuste */}
-                {plan.adjustmentReason && (
-                  <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm text-amber-800">
-                      <strong>💡 Ajuste Automático:</strong> {plan.adjustmentReason}
-                    </p>
-                  </div>
-                )}
+
               </CardContent>
             </Card>
+          )}
+
+          {/* Ajustes Automáticos */}
+          {plan.adjustmentReason && plan.adjustmentReason.trim().length > 0 ? (
+            <div className="border rounded-xl bg-yellow-50 border-yellow-300 p-4 mt-6">
+              <h2 className="text-lg font-semibold text-yellow-700 mb-1">
+                ⚠️ Ajustes automáticos
+              </h2>
+              <p className="text-sm text-yellow-800 leading-relaxed whitespace-pre-line">
+                {plan.adjustmentReason}
+              </p>
+            </div>
+          ) : (
+            <div className="border rounded-xl bg-gray-50 border-gray-200 p-4 mt-6">
+              <h2 className="text-lg font-semibold text-gray-700 mb-1">
+                ℹ️ Ajustes do Plano
+              </h2>
+              <p className="text-sm text-gray-600">
+                Plano gerado conforme solicitado, sem ajustes automáticos.
+              </p>
+            </div>
           )}
 
           {/* Parâmetros do Plano */}

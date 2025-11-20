@@ -1136,3 +1136,16 @@
 - [x] adjustmentReason só é gerado quando há ajustes reais (por design)
 - [x] Correção garante preservação de adjustmentReason ao longo do pipeline
 
+
+
+
+### 28. Seção de Ajustes Automáticos no PlanView
+- [x] Remover implementação antiga do adjustmentReason dentro do card Resumo
+- [x] Criar card dedicado de Ajustes Automáticos após o Resumo
+- [x] Implementar card amarelo quando adjustmentReason não é NULL
+- [x] Implementar card cinza neutro quando adjustmentReason é NULL
+- [x] Suportar whitespace-pre-line para quebras de linha
+- [x] Testar com adjustmentReason NULL (card cinza)
+- [x] Testar com adjustmentReason preenchido (card amarelo)
+- [x] Validar posicionamento entre Resumo e Parâmetros
+
