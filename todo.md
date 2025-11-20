@@ -965,3 +965,45 @@
 - [x] Atualizar todo.md
 - [x] Salvar checkpoint
 
+
+
+
+### 39. Prompt 4.5 - Testes Extremos & QA Final do Motor
+
+**Objetivo:** Garantir que o motor NUNCA entregue plano incoerente, mesmo quando IA erra, exagera ou devolve dados estranhos.
+
+#### Parte 1 - Suite de Testes de Estresse
+- [x] Criar arquivo server/recipe-engine.stress.test.ts
+- [x] Teste 1: Ingredientes mínimos (arroz, ovo, cenoura)
+- [x] Teste 2: Modo aproveitamento com estoque enorme
+- [x] Teste 3: Bloquear 100% das exclusões
+- [x] Teste 4: Dieta low carb nunca contém carboidratos proibidos
+- [x] Teste 5: Dieta vegana nunca contém produtos animais
+- [x] Teste 6: Tempo - plano marca timeFits corretamente
+- [x] Teste 7: Sobreviver a resposta quebrada da IA (JSON inválido)
+- [x] Teste 8: Sanitização remove pratos vazios após dieta/exclusões
+- [x] 8 testes de estresse criados (100% passando em 113.7s)
+
+#### Parte 2 - QA Manual (7 Cenários)
+- [x] QA 1: Ingredientes mínimos (arroz, ovo, cenoura, 4 porções, 1 mistura)
+- [x] QA 2: Dieta vegana + exclusão tomate + allowNewIngredients=false
+- [x] QA 3: Tempo muito curto (20 minutos, 6 porções)
+- [x] QA 4: Tempo bastante (3h, 12 porções)
+- [x] QA 5: Aproveitamento total (talos, cascas, sobras)
+- [x] QA 6: Estoque extremo (arroz 200g, frango 100g, cenoura 10g, 10 porções)
+- [x] QA 7: Ingredientes duplicados (tomate, Tomate, tomate cereja)
+- [x] Script automatizado de QA criado e executado
+
+#### Validação Final
+- [x] Zero erros no console
+- [x] Todos os 8 testes passam
+- [x] Plano nunca fica inconsistente
+- [x] Nunca aparecem ingredientes proibidos
+- [x] Tempo e porções sempre coerentes
+- [x] Estoque nunca é violado
+- [x] Fallback sempre cobre falhas da IA
+
+#### Checkpoint
+- [x] Atualizar todo.md
+- [x] Salvar checkpoint com relatório completo
+
