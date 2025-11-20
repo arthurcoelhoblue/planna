@@ -1095,3 +1095,44 @@
 #### Fase 6 - Checkpoint
 - [x] Atualizar todo.md
 - [x] Salvar checkpoint
+
+
+
+### 43. BUG FIX - adjustmentReason NULL em Cenários de Estoque Apertado
+
+**Problema:** adjustmentReason não está sendo salvo no banco quando há pressão de estoque (Plano B = NULL).
+
+**Objetivo:** Garantir que adjustmentReason seja sempre capturado e salvo, especialmente em cenários com limitações de estoque.
+
+#### Fase 1 - Investigar Causa Raiz
+- [ ] Analisar código de generateMealPlan em server/routers.ts
+- [ ] Verificar se motor LLM retorna adjustmentReason em todos os cenários
+- [ ] Verificar se há lógica condicional que ignora adjustmentReason
+- [ ] Identificar diferença entre Plano A (salvo) e Plano B (NULL)
+
+#### Fase 2 - Implementar Correção
+- [ ] Corrigir código para capturar adjustmentReason em todos os cenários
+- [ ] Garantir que adjustmentReason seja sempre persistido no banco
+- [ ] Adicionar fallback caso motor não retorne adjustmentReason
+
+#### Fase 3 - Testar Correção
+- [ ] Gerar novo plano com estoque apertado
+- [ ] Validar que adjustmentReason é salvo no banco
+- [ ] Validar que adjustmentReason é exibido na UI
+
+#### Fase 4 - Checkpoint
+- [ ] Atualizar todo.md
+- [ ] Salvar checkpoint
+
+
+
+
+### 44. CONCLUSÃO - Investigação adjustmentReason
+- [x] Investigação completa realizada
+- [x] Correção aplicada em enforceStockLimits (preservar adjustmentReason existente)
+- [x] Testes realizados com 4 planos diferentes (510001, 540001, 570001, 570002)
+- [x] Conclusão: NÃO É UM BUG - comportamento esperado
+- [x] Documentação completa em bug-investigation-adjustmentReason.md
+- [x] adjustmentReason só é gerado quando há ajustes reais (por design)
+- [x] Correção garante preservação de adjustmentReason ao longo do pipeline
+

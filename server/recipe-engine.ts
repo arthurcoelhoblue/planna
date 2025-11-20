@@ -829,12 +829,15 @@ function enforceStockLimits(
   return {
     ...plan,
     dishes: fullyAdjustedDishes,
+    // Preserva adjustmentReason existente e adiciona ajustes de estoque se houver
     ...(adjustment.length > 0
       ? {
           adjustmentReason: `${
             plan.adjustmentReason || ""
           } Ajustes por estoque: ${adjustment.join(" | ")}`,
         }
+      : plan.adjustmentReason
+      ? { adjustmentReason: plan.adjustmentReason }
       : {}),
   };
 }
