@@ -871,3 +871,36 @@
 - [x] Salvar checkpoint com documentação
 
 
+
+
+
+### 36. Testes de Integração End-to-End para Dietas e Sanitização
+
+**Objetivo:** Criar testes completos que validam a criação de receitas com todas as regras de dieta e sanitização implementadas.
+
+#### Fase 1 - Testes por Dieta Canônica
+- [x] Testar dieta low carb (deve remover arroz, batata, pão)
+- [x] Testar dieta vegana (deve remover carne, frango, ovo, leite)
+- [x] Testar dieta vegetariana (deve remover carne, frango, peixe)
+- [x] Testar dieta cetogênica (deve remover arroz, batata, açúcar)
+- [x] Testar dieta sem glúten (deve remover trigo, pão, massa)
+- [x] Testar dieta sem lactose (deve remover leite, queijo, manteiga)
+- [x] IA sugere substitutos inteligentes (arroz de couve-flor, leite vegetal)
+
+#### Fase 2 - Testes Combinados
+- [x] Testar dieta + exclusões do usuário
+- [x] Testar dieta + allowNewIngredients = false
+- [x] Validar sanitização remove ingredientes não permitidos
+
+#### Fase 3 - Validação
+- [x] Executar todos os testes
+- [x] Validar que ingredientes proibidos são removidos
+- [x] Validar que receitas inválidas são removidas
+- [x] Validar adjustmentReason correto
+- [x] Teste de debug confirma sanitização 100% funcional
+
+#### Fase 4 - Checkpoint
+- [x] Atualizar todo.md
+- [x] Salvar checkpoint
+
+
