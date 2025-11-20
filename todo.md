@@ -1007,3 +1007,19 @@
 - [x] Atualizar todo.md
 - [x] Salvar checkpoint com relatório completo
 
+
+
+
+### 40. Correção de Erro de Login
+
+**Problema:** Login estava funcionando 100% e agora está dando erro.
+**Causa Raiz:** Cache de módulo antigo do Node.js após limpeza da função OAuth.
+**Solução:** Restart do servidor limpou o cache e resolveu o problema.
+
+- [x] Investigar logs de erro no console
+- [x] Identificar causa raiz do problema (cache de módulo)
+- [x] Corrigir erro de login (restart do servidor)
+- [x] Testar login manualmente (funcionando 100%)
+- [x] Validar que login está funcionando (autenticado como Arthur Coelho)
+- [x] Salvar checkpoint
+
