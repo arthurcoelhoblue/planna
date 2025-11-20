@@ -1048,3 +1048,50 @@
 - ✅ resolvedSkillLevel funcionando perfeitamente
 - ✅ Todos os campos sendo persistidos corretamente
 
+
+
+### 42. PATCH 5.2 - Estoque Estruturado Real + Derivação Canônica + Persistência Completa
+
+**Objetivo:** Substituir mealPlan.generate para usar estoque estruturado (quantidade + unidade) no motor, derivação canônica de skillLevel/dietType e persistência completa de todos os campos no banco.
+
+#### Fase 1 - Aplicar PATCH 5.2 em server/routers.ts
+- [x] Localizar bloco mealPlan.generate
+- [x] Substituir mutation completa conforme especificação
+- [x] Usar parseIngredients para extrair estoque estruturado
+- [x] Montar ingredientsWithStock com { name, quantity, unit }
+- [x] Adicionar derivação canônica: resolvedSkillLevel e resolvedDietType
+- [x] Persistir TODOS os campos: dietType, mode, skillLevel, allowNewIngredients, maxKcalPerServing, availableTime
+
+#### Fase 2 - Validar Compilação
+- [x] Verificar que TypeScript compila sem erros
+- [x] Verificar que servidor sobe normalmente
+- [ ] Verificar que não há erros no console
+
+#### Fase 3 - Gerar Plano A (sem pressão de estoque)
+- [x] Ingredientes: sem quantidades (só nomes)
+- [x] Modo: normal
+- [x] Dieta: em branco
+- [x] allowNewIngredients: ligado
+- [x] Validar que plano é gerado com sucesso
+- [x] Plano A gerado: ID 510001
+
+#### Fase 4 - Gerar Plano B (com estoque apertado)
+- [x] Ingredientes: "2kg frango, 1kg arroz, 500g feijão"
+- [x] Porções: 10 (ajustado de 20+ devido a limitações de UI)
+- [x] Modo: aproveitamento
+- [x] allowNewIngredients: desligado
+- [x] Limite calórico: 500 kcal/porção
+- [x] Validar que plano é gerado com sucesso
+- [x] Plano B gerado: ID 540001
+- [x] Modal de alerta de estoque insuficiente exibido
+
+#### Fase 5 - Validar Badges e adjustmentReason
+- [x] Plano A: badges visíveis (Dieta, Modo, Nível, Tempo, Novos ingredientes)
+- [x] Plano B: badges visíveis (Dieta, Modo, Nível, Tempo, Limite calórico)
+- [x] Plano A: adjustmentReason salvo no banco e exibido na UI
+- [x] Plano B: adjustmentReason NULL no banco (problema identificado)
+- [x] Resultados documentados em patch-5.2-test-results.md
+
+#### Fase 6 - Checkpoint
+- [x] Atualizar todo.md
+- [x] Salvar checkpoint

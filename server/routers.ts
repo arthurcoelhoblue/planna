@@ -486,38 +486,52 @@ export const appRouter = router({
           getUserDishFeedback,
         } = await import("./db");
 
-        // Parse ingredients
+        // 1) Parse da entrada livre → ingredientes normalizados + estoque
         const parsedIngredients = parseIngredients(input.ingredients);
-        const availableIngredients = parsedIngredients
-          .filter(i => i.canonical)
-          .map(i => i.canonical!);
 
-        // Get user preferences and feedback
+        // Monta lista com nome canônico + quantidade/unidade quando existir
+        const ingredientsWithStock = parsedIngredients
+          .filter(i => i.canonical)
+          .map(i => ({
+            name: i.canonical!,
+            ...(i.quantity ? { quantity: i.quantity } : {}),
+            ...(i.inputUnit || i.unit ? { unit: (i.inputUnit || i.unit)! } : {}),
+          }));
+
+        // Se por algum motivo nada foi mapeado, cai no fallback só com nomes
+        const availableIngredients =
+          ingredientsWithStock.length > 0
+            ? ingredientsWithStock
+            : parsedIngredients
+                .filter(i => i.canonical)
+                .map(i => i.canonical!);
+
+        // 2) Preferências do usuário + feedback em pratos
         const userPref = await getUserPreference(ctx.user.id);
         const feedback = await getUserDishFeedback(ctx.user.id);
 
-        const userFavorites = userPref?.favorites ? JSON.parse(userPref.favorites) : [];
+        const userFavorites = userPref?.favorites
+          ? JSON.parse(userPref.favorites)
+          : [];
+
         const userDislikes = feedback
           .filter(f => f.rating === "disliked")
           .map(f => f.dishName);
 
-        // Combine exclusions
+        // 3) Exclusions combinadas (input + preferências)
         const allExclusions = [
           ...(input.exclusions || []),
           ...(userPref?.exclusions ? JSON.parse(userPref.exclusions) : []),
         ];
 
-        // Deriva parâmetros "canônicos" usados pelo motor e que vamos persistir
-        const resolvedSkillLevel =
-          input.skillLevel || userPref?.skillLevel || "intermediate";
-
-        const resolvedDietType =
-          input.dietType || userPref?.dietType || undefined;
-
-        // Paywall: verificar limite mensal
+        // 4) Paywall: limite mensal
         const { hasReachedMonthlyLimit } = await import("./paywall");
         const tier = ctx.user.subscriptionTier || "free";
-        const reachedLimit = await hasReachedMonthlyLimit(ctx.user.id, tier, ctx.user.email);
+        const reachedLimit = await hasReachedMonthlyLimit(
+          ctx.user.id,
+          tier,
+          ctx.user.email
+        );
 
         if (reachedLimit) {
           throw new Error(
@@ -525,7 +539,14 @@ export const appRouter = router({
           );
         }
 
-        // Generate plan com contrato unificado
+        // 5) Normalização dos parâmetros que o motor REALMENTE usa
+        const resolvedSkillLevel =
+          input.skillLevel || userPref?.skillLevel || "intermediate";
+
+        const resolvedDietType =
+          input.dietType || userPref?.dietType || undefined;
+
+        // 6) Chamada do Recipe Engine com estoque real
         const plan = await generateMealPlan({
           availableIngredients,
           servings: input.servings,
@@ -542,7 +563,7 @@ export const appRouter = router({
           availableTime: input.availableTime,
         });
 
-        // Save session
+        // 7) Salva sessão (entrada original)
         const sessionId = await createSession({
           userId: ctx.user.id,
           inputText: input.ingredients,
@@ -551,7 +572,7 @@ export const appRouter = router({
           exclusions: JSON.stringify(input.exclusions || []),
         });
 
-        // Save plan — agora persistindo TUDO que o front já espera
+        // 8) Salva plano com TODOS os metadados que o PlanView espera
         const planId = await createPlan({
           sessionId,
           dishes: JSON.stringify(plan.dishes),
@@ -564,14 +585,12 @@ export const appRouter = router({
             ? Math.round(plan.avgKcalPerServing)
             : undefined,
 
-          // Metadados de configuração do usuário
+          // Configuração do usuário / preferências
           dietType: resolvedDietType,
           mode: input.objective || "normal",
           skillLevel: resolvedSkillLevel,
-          allowNewIngredients:
-            input.allowNewIngredients ?? true,
-          maxKcalPerServing:
-            input.calorieLimit ?? undefined,
+          allowNewIngredients: input.allowNewIngredients ?? true,
+          maxKcalPerServing: input.calorieLimit ?? undefined,
 
           // Tempo
           availableTime: plan.availableTime ?? input.availableTime ?? undefined,
@@ -582,7 +601,7 @@ export const appRouter = router({
           requestedVarieties: input.varieties,
           requestedServings: input.servings,
 
-          // Ajustes do motor
+          // Ajustes do motor (inclui "Ajustes por estoque: ...")
           adjustmentReason: plan.adjustmentReason,
         });
 
