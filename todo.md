@@ -904,3 +904,34 @@
 - [x] Salvar checkpoint
 
 
+
+
+
+### 37. Patch Completo de Enforce de Estoque (4.3)
+
+**Objetivo:** Implementar controle real de estoque que ajusta quantidades das receitas para NUNCA exceder os limites informados.
+
+#### Fase 1 - Funções de Controle de Estoque
+- [x] Adicionar função normalizeUnit (converte unidades para base comum)
+- [x] Adicionar função enforceStockLimits (controle real de estoque)
+- [x] Calcular uso total por ingrediente no plano
+- [x] Calcular fatores de redução para ingredientes excedentes
+- [x] Aplicar redução em todas as receitas
+- [x] Recalcular kcal após ajustes
+
+#### Fase 2 - Integração na Pipeline
+- [x] Adicionar stockEnforcedPlan após enforceVarietiesAndServings
+- [x] Passar stockEnforcedPlan para calculateTimeMetrics
+- [x] Validar que estoque é respeitado em todos os casos
+
+#### Fase 3 - Testes
+- [x] Testar normalização de unidades (g, kg, ml, l, unidade)
+- [x] Testar redução quando estoque é excedido
+- [x] Testar que kcal é recalculado corretamente
+- [x] Testar que adjustmentReason registra ajustes
+- [x] 6 testes unitários criados (100% passando)
+
+#### Fase 4 - Checkpoint
+- [x] Atualizar todo.md
+- [x] Salvar checkpoint
+

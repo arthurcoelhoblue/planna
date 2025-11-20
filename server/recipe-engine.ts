@@ -583,6 +583,156 @@ function enforceVarietiesAndServings(
 }
 
 /**
+ * Normaliza unidade em um formato padrão para cálculo de estoque.
+ * Todas as unidades relacionadas a peso → gramas
+ * Todas as unidades relacionadas a volume → ml
+ * Unidades de "unidade" ficam como "unidade"
+ */
+function normalizeUnit(unit: string) {
+  const u = unit.toLowerCase().trim();
+
+  if (["g", "gramas", "grama"].includes(u)) return { factor: 1, base: "g" };
+  if (["kg", "quilo", "kg."].includes(u)) return { factor: 1000, base: "g" };
+
+  if (["ml"].includes(u)) return { factor: 1, base: "ml" };
+  if (["l", "litro", "lt"].includes(u)) return { factor: 1000, base: "ml" };
+
+  if (["un", "unidade", "und", "uni"].includes(u))
+    return { factor: 1, base: "unidade" };
+
+  // fallback seguro
+  return { factor: 1, base: u };
+}
+
+/**
+ * Enforce completo de estoque — NADA passa acima do limite informado.
+ * Ajusta quantidades das receitas, recalcula kcal, ajusta porções e anota justification.
+ */
+function enforceStockLimits(
+  plan: MealPlan,
+  stock: IngredientWithStock[]
+): MealPlan {
+  if (stock.length === 0) return plan;
+
+  console.log("[STOCK] Executando controle real de estoque...");
+
+  // 1) Mapear estoque normalizado
+  const stockMap = new Map<
+    string,
+    { quantity: number; unit: string; norm: { factor: number; base: string } }
+  >();
+
+  for (const item of stock) {
+    if (!item.quantity) continue;
+
+    const norm = normalizeUnit(item.unit || "g");
+    const normalizedQty = item.quantity * norm.factor;
+
+    stockMap.set(normalizeName(item.name), {
+      quantity: normalizedQty,
+      unit: norm.base,
+      norm,
+    });
+  }
+
+  // 2) Calcular uso total por ingrediente no plano
+  const usageMap = new Map<
+    string,
+    { used: number; unit: string; norm: { factor: number; base: string } }
+  >();
+
+  for (const dish of plan.dishes) {
+    for (const ing of dish.ingredients) {
+      const key = normalizeName(ing.name);
+      const norm = normalizeUnit(ing.unit);
+      const normalizedQty = ing.quantity * norm.factor;
+
+      if (!usageMap.has(key)) {
+        usageMap.set(key, {
+          used: normalizedQty,
+          unit: norm.base,
+          norm,
+        });
+      } else {
+        usageMap.get(key)!.used += normalizedQty;
+      }
+    }
+  }
+
+  // 3) Verificar excedentes e calcular fator corretivo global por ingrediente
+  const adjustment: string[] = [];
+  const reductionFactors = new Map<string, number>();
+
+  for (const [key, usage] of Array.from(usageMap.entries())) {
+    const stockItem = stockMap.get(key);
+    if (!stockItem) continue; // ingrediente sem limite explícito → ok
+
+    const { used } = usage;
+    const { quantity: available, unit } = stockItem;
+
+    if (used <= available) continue;
+
+    const factor = available / used;
+
+    reductionFactors.set(key, factor);
+
+    adjustment.push(
+      `Ingrediente "${key}" excedeu o estoque (${used}${unit} > ${available}${unit}). Reduzido por fator ${factor.toFixed(
+        2
+      )}.`
+    );
+  }
+
+  // 4) Aplicar redução receita por receita, ingrediente por ingrediente
+  const updatedDishes = plan.dishes.map((dish) => {
+    const updatedIngredients = dish.ingredients.map((ing) => {
+      const key = normalizeName(ing.name);
+      if (!reductionFactors.has(key)) return ing;
+
+      const factor = reductionFactors.get(key)!;
+      const norm = normalizeUnit(ing.unit);
+
+      return {
+        ...ing,
+        quantity: ing.quantity * factor,
+        // kcal também deve acompanhar a redução
+        ...(ing.kcal ? { kcal: ing.kcal * factor } : {}),
+      };
+    });
+
+    return { ...dish, ingredients: updatedIngredients };
+  });
+
+  // 5) Recalcular kcal da receita inteira e kcal por porção
+  const fullyAdjustedDishes = updatedDishes.map((dish) => {
+    const totalKcal = dish.ingredients.reduce(
+      (sum, ing) => sum + (ing.kcal || 0),
+      0
+    );
+
+    const kcalPerServing = totalKcal / dish.servings;
+
+    return {
+      ...dish,
+      totalKcal,
+      kcalPerServing,
+    };
+  });
+
+  return {
+    ...plan,
+    dishes: fullyAdjustedDishes,
+    ...(adjustment.length > 0
+      ? {
+          adjustmentReason: `${
+            plan.adjustmentReason || ""
+          } Ajustes por estoque: ${adjustment.join(" | ")}`,
+        }
+      : {}),
+  };
+}
+
+/**
  * Gera um plano de marmitas usando IA
  */
 export async function generateMealPlan(params: {
@@ -914,13 +1064,16 @@ Gere o plano completo em JSON com informações nutricionais detalhadas.`;
       availableIngredients,
     });
     
-    // Enforcement rigoroso de misturas e porções
-    const enforcedPlan = enforceVarietiesAndServings(dietSanitizedPlan, numDishes, servings);
-    
-    // Pós-processamento: calcular tempo total e verificar se cabe no tempo disponível
-    const finalPlan = calculateTimeMetrics(enforcedPlan, availableTime);
-    
-    return finalPlan;
+  // Enforcement rigoroso de misturas e porções
+  const enforcedPlan = enforceVarietiesAndServings(dietSanitizedPlan, numDishes, servings);
+  
+  // NOVO: Enforce real de estoque (4.3)
+  const stockEnforcedPlan = enforceStockLimits(enforcedPlan, stockLimits);
+  
+  // Pós-processamento: calcular tempo total e verificar se cabe no tempo disponível
+  const finalPlan = calculateTimeMetrics(stockEnforcedPlan, availableTime);
+  
+  return finalPlan;
   } catch (error) {
     console.error("Erro ao gerar plano:", error);
     // Fallback: retorna plano básico seguro
